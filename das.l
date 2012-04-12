@@ -2,13 +2,18 @@
 void yyerror(char *);
 #include "y.tab.h"
 #include "dasdefs.h"
-int opcode(char *);
+#include "das.h"
+static int get_constant(void);
 %}
 
 %option yylineno
+/* shut up warnings */
+%option noinput
+%option nounput
 
 letter		[A-Za-z]
 digit		[0-9]
+hexdigit	[0-9a-fA-F]
 label		{letter}({letter}|{digit}|_)*
 gpreg		[ABCXYZIJabcxyzij]
 xreg		SP|PC|O|POP|PEEK|PUSH
@@ -19,14 +24,13 @@ op1		JSR
 
 ;.*\n		return '\n';
 ^:{label}	return LABELDEF;
-(0x)?{digit}+	{
-		yylval = atoi(yytext);
-		return CONSTANT;
-	}
-{gpreg}		{ yylval = *yytext; return GPREG; }
-{xreg}		return XREG;
-{op2}		{ yylval = op2code(yytext); return OP2; }
-{op1}		return OP1;
+0x{hexdigit}+	return get_constant();
+{digit}+	return get_constant();
+ /* force gpreg to lowercase */
+{gpreg}		{ yylval.intval = (*yytext | 0x20); return GPREG; }
+{xreg}		{ yylval.intval = str2xreg(yytext); return XREG; }
+{op2}		{ yylval.intval = str2op(yytext); return OP2; }
+{op1}		{ yylval.intval = str2op(yytext); return OP1; }
 {label}		return LABEL;
 
 [,+\[\]\n]	return *yytext;
@@ -37,6 +41,13 @@ op1		JSR
 
 %%
 
+static int get_constant(void)
+{
+	yylval.intval = (int)strtol(yytext, NULL, 0);
+	return CONSTANT;
+}
+
+int get_lineno(void) { return yylineno; }
 
 int yywrap(void)
 {
@@ -46,4 +57,5 @@ int yywrap(void)
 void yyerror(char *s)
 {
 	fprintf(stderr, "line %d: %s\n", yylineno, s);
+	das_error = 1;
 }
