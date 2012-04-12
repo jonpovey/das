@@ -138,7 +138,7 @@ static LIST_HEAD(instructions);
 /* generate a num for a const */
 struct num* gen_const(int val)
 {
-	printf("gen_const: %d\n", val);
+	//printf("gen_const: %d\n", val);
 	struct num *n = malloc(sizeof *n);
 	n->islabel = 0;
 	n->value = val;
@@ -147,7 +147,7 @@ struct num* gen_const(int val)
 
 struct num* gen_label(char *str)
 {
-	printf("gen_label: %s\n", str);
+	//printf("gen_label: %s\n", str);
 	struct num *n = malloc(sizeof *n);
 	n->islabel = 1;
 	n->label = label_exists(str);
@@ -157,7 +157,7 @@ struct num* gen_label(char *str)
 /* generate a value from reg (maybe -1), num (maybe null), indirect flag */
 struct value* gen_value(int reg, struct num *num, int indirect)
 {
-	printf("gen_value(reg:%d num:%p %sdirect)\n", reg, num, indirect ? "in":"");
+	//printf("gen_value(reg:%d num:%p %sdirect)\n", reg, num, indirect ? "in":"");
 	struct value *v = calloc(1, sizeof *v);
 	v->indirect = indirect;
 	v->reg = reg;
@@ -173,7 +173,7 @@ void gen_instruction(int opcode, struct value *vala, struct value *valb)
 	i->opcode = opcode;
 	i->vala = vala;
 	i->valb = valb;
-	printf("add instruction to list\n");
+	//printf("add instruction to list\n");
 	list_add_tail(&i->list, &instructions);
 }
 
@@ -247,7 +247,7 @@ void val_genbits(struct value *v)
 	else
 		v->firstbits = 0;
 
-	if (v->reg >= 0 && v->reg < 6) {	// magic numbers ahoy!
+	if (v->firstbits & 0x10) {			// magic numbers ahoy!
 		/* x-reg, bits set already */
 		ERR_ON(v->num);
 	} else if (v->reg < 0) {
@@ -289,14 +289,14 @@ void val_genbits(struct value *v)
 u16 val_firstbits(struct value *v)
 {
 	assert(v->word_count >= 1);
-	printf("firstbits: 0x%x\n", v->firstbits);
+	//printf("firstbits: 0x%x\n", v->firstbits);
 	return v->firstbits;
 }
 
 u16 val_nextbits(struct value *v)
 {
 	assert(v->word_count == 2);
-	printf("nextbits: 0x%x\n", v->nextbits);
+	//printf("nextbits: 0x%x\n", v->nextbits);
 	return v->nextbits;
 }
 

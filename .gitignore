@@ -4,3 +4,4 @@ y.tab.c
 y.tab.h
 *.pdf
 _*
+out.bin

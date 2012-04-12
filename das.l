@@ -22,19 +22,19 @@ op1		JSR
 
 %%
 
-;.*\n		return '\n';
-^:{label}	return LABELDEF;
+:{label}	{ yylval.stringval = yytext; return LABELDEF; }
 0x{hexdigit}+	return get_constant();
 {digit}+	return get_constant();
 {gpreg}		{ yylval.intval = str2reg(yytext); return GPREG; }
 {xreg}		{ yylval.intval = str2reg(yytext); return XREG; }
 {op2}		{ yylval.intval = str2op(yytext); return OP2; }
 {op1}		{ yylval.intval = str2op(yytext); return OP1; }
-{label}		return LABEL;
+{label}		{ yylval.stringval = yytext; return LABEL; }
 
 [,+\[\]\n]	return *yytext;
 
 [ \t]+		;	/* ignore whitespace */
+;.*		;	/* comment */
 
 .		yyerror("Invalid character ");
 

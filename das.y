@@ -12,11 +12,12 @@ void parse_error(char *str);
 
 %union {
 	int  intval;
+	char *stringval;
 	struct num *numval;
 	struct value *valval;	// errrm
 }
 
-%token LABEL LABELDEF		// probably stringval
+%token <stringval> LABEL LABELDEF
 %token <intval> CONSTANT
 %token <intval> GPREG
 %token <intval> XREG
@@ -54,7 +55,7 @@ void parse_error(char *str);
 	*/
 
 program:
-	program line '\n'			{ /* done a line.. anything? */ }
+	program line '\n'			{ /*printf("line\n");*/ }
 	| program '\n'				/* empty line or comment */
 	|
 	;
@@ -63,15 +64,15 @@ line:
 	instr
 	| labeldef
 	| labeldef instr
-	;
+	;							
 
 labeldef:
 	LABELDEF					{ printf("labeldef "); }
 	;
 
 instr:
-	OP2 value ',' value			{ gen_instruction($1, $2, $4); }
-	| OP1 value					{ gen_instruction($1, $2, NULL); }
+	OP2 value ',' value			{ gen_instruction($1, $2, $4); /*printf("op2 ");*/ }
+	| OP1 value					{ gen_instruction($1, $2, NULL); /*printf("op1 ");*/ }
 	| error						{ parse_error("bad instruction "); }
 	;
 
@@ -87,12 +88,12 @@ value:
 	;
 
 gpreg:
-	GPREG						{ printf("gpreg:%c ", $1); }
+	GPREG						{ $$ = $1; }
 	;
 
 num:
 	CONSTANT					{ $$ = gen_const($1); }
-	| LABEL						{ printf("label "); }
+	| LABEL						{ $$ = gen_label($1); }
 	;
 
 %%
