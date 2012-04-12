@@ -26,9 +26,8 @@ op1		JSR
 ^:{label}	return LABELDEF;
 0x{hexdigit}+	return get_constant();
 {digit}+	return get_constant();
- /* force gpreg to lowercase */
-{gpreg}		{ yylval.intval = (*yytext | 0x20); return GPREG; }
-{xreg}		{ yylval.intval = str2xreg(yytext); return XREG; }
+{gpreg}		{ yylval.intval = str2reg(yytext); return GPREG; }
+{xreg}		{ yylval.intval = str2reg(yytext); return XREG; }
 {op2}		{ yylval.intval = str2op(yytext); return OP2; }
 {op1}		{ yylval.intval = str2op(yytext); return OP1; }
 {label}		return LABEL;

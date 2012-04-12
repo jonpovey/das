@@ -55,6 +55,7 @@ void parse_error(char *str);
 
 program:
 	program line '\n'			{ /* done a line.. anything? */ }
+	| program '\n'				/* empty line or comment */
 	|
 	;
 

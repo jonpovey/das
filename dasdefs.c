@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -22,7 +23,24 @@ static char *opcodes[] = {
 	"IFB",
 };
 
-static char *xregs[] = { "SP", "PC", "O", "POP", "PEEK", "PUSH" };
+static struct reg registers[] = {
+	{ "a",    0 },
+	{ "b",    1 },
+	{ "c",    2 },
+	{ "x",    3 },
+	{ "y",    4 },
+	{ "z",    5 },
+	{ "i",    6 },
+	{ "j",    7 },
+	{ "POP",  0x18 },
+	{ "PEEK", 0x19 },
+	{ "PUSH", 0x1a },
+	{ "SP",   0x1b },
+	{ "PC",   0x1c },
+	{ "O",    0x1d },
+};
+
+//static char *xregs[] = { "POP", "PEEK", "PUSH", "SP", "PC", "O" };
 
 int arrsearch(char *str, char **arr, int arrsize)
 {
@@ -50,20 +68,29 @@ char* op2str(int op)
 		return "INVALID";
 }
 
-int str2xreg(char *str)
+int str2reg(char *str)
 {
-	return arrsearch(str, xregs, ARRAY_SIZE(xregs));
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(registers); i++) {
+		if (0 == strcasecmp(str, registers[i].name))
+			return i;
+	}
+	fprintf(stderr, "BUG reg '%s' not found!\n", str);
+	return -1;
 }
 
 char* reg2str(int reg)
 {
-	static char hackstr[2];
-
-	if (reg >= 0 && reg < ARRAY_SIZE(xregs)) {
-		return xregs[reg];
+	if (reg >= 0 && reg < ARRAY_SIZE(registers)) {
+		return registers[reg].name;
 	} else {
-		hackstr[0] = (char)reg;
-		hackstr[1] = 0;
-		return hackstr;
+		return NULL;
 	}
+}
+
+u16 reg2bits(int reg)
+{
+	assert(reg >= 0 && reg < ARRAY_SIZE(registers));
+	return registers[reg].valbits;
 }

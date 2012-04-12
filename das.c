@@ -101,12 +101,15 @@ struct value {
 	int indirect;
 	int reg;
 	struct num *num;
+	int word_count;
+	u16 firstbits;
+	u16 nextbits;
 };
 
 struct instruction {
 	int opcode;
-	struct value* val1;
-	struct value* val2;
+	struct value* vala;
+	struct value* valb;
 	struct list_head list;
 };
 
@@ -155,20 +158,21 @@ struct num* gen_label(char *str)
 struct value* gen_value(int reg, struct num *num, int indirect)
 {
 	printf("gen_value(reg:%d num:%p %sdirect)\n", reg, num, indirect ? "in":"");
-	struct value *v = malloc(sizeof *v);
+	struct value *v = calloc(1, sizeof *v);
 	v->indirect = indirect;
 	v->reg = reg;
 	v->num = num;
+	v->word_count = 0;
 	return v;
 }
 
 /* generate an instruction from an opcode and one or two values */
-void gen_instruction(int opcode, struct value *val1, struct value *val2)
+void gen_instruction(int opcode, struct value *vala, struct value *valb)
 {
 	struct instruction *i = malloc(sizeof *i);
 	i->opcode = opcode;
-	i->val1 = val1;
-	i->val2 = val2;
+	i->vala = vala;
+	i->valb = valb;
 	printf("add instruction to list\n");
 	list_add_tail(&i->list, &instructions);
 }
@@ -207,19 +211,125 @@ void dump_val(struct value *v)
 void dump_instruction(struct instruction *i)
 {
 	printf("%s ", op2str(i->opcode));
-	dump_val(i->val1);
-	if (i->val2) {
+	dump_val(i->vala);
+	if (i->valb) {
 		printf(", ");
-		dump_val(i->val2);
+		dump_val(i->valb);
 	}
 	printf("\n");
+}
+
+/*
+ * bit generation
+ */
+int num_getval(struct num *num)
+{
+	assert(num);
+	if (num->islabel) {
+		ERR_ON(!label_resolved(num->label));
+		return num->label->value;
+	} else {
+		return num->value;
+	}
+}
+
+/* validate completeness and generate bits for value */
+void val_genbits(struct value *v)
+{
+	int numval;
+	int words = 1;
+
+	if (v->num)
+		numval = num_getval(v->num);
+
+	if (v->reg != -1)
+		v->firstbits = reg2bits(v->reg);
+	else
+		v->firstbits = 0;
+
+	if (v->reg >= 0 && v->reg < 6) {	// magic numbers ahoy!
+		/* x-reg, bits set already */
+		ERR_ON(v->num);
+	} else if (v->reg < 0) {
+		/* no reg. have a num. */
+		if (v->indirect || numval > 0x1f) {
+			if (v->indirect) {
+				/* [next word] form */
+				v->firstbits = 0x1e;
+			} else {
+				/* next word literal */
+				v->firstbits = 0x1f;
+			}
+			v->nextbits = (u16)numval;
+			words = 2;
+		} else {
+			/* small literal */
+			v->firstbits = 0x20 | (u16)numval;
+		}
+	} else {
+		/* gpreg in some form */
+		if (v->indirect) {
+			if (v->num) {
+				/* [next word + register] */
+				v->firstbits |= 0x10;
+				words = 2;
+			} else {
+				/* [gp register] */
+				v->firstbits |= 0x08;
+			}
+		}
+		/* else plain gpreg, nothing to modify */
+	}
+
+	if (words == 2)
+		v->nextbits = (u16)numval;
+	v->word_count = words;
+}
+
+u16 val_firstbits(struct value *v)
+{
+	assert(v->word_count >= 1);
+	printf("firstbits: 0x%x\n", v->firstbits);
+	return v->firstbits;
+}
+
+u16 val_nextbits(struct value *v)
+{
+	assert(v->word_count == 2);
+	printf("nextbits: 0x%x\n", v->nextbits);
+	return v->nextbits;
 }
 
 /* write instruction binary to binfile */
 void writebin_instruction(struct instruction *i)
 {
-	u16 firstword = 0;
-	fwrite(&firstword, 2, 1, binfile);
+	u16 word = 0;
+
+	assert(i->vala);
+	val_genbits(i->vala);
+	if (i->valb)
+		val_genbits(i->valb);
+
+	if (i->opcode == 0) {
+		/* special case JSR */
+		word |= 1 << 4;
+		word |= val_firstbits(i->vala) << 10;
+	} else {
+		assert(i->valb);
+		assert(i->opcode > 0 && i->opcode < 16);
+		word |= i->opcode;
+		word |= val_firstbits(i->vala) << 4;
+		word |= val_firstbits(i->valb) << 10;
+	}
+	fwrite(&word, 2, 1, binfile);
+	if (i->vala->word_count == 2) {
+		word = val_nextbits(i->vala);
+		fwrite(&word, 2, 1, binfile);
+	}
+	if (i->valb && i->valb->word_count == 2) {
+		word = val_nextbits(i->valb);
+		fwrite(&word, 2, 1, binfile);
+	}		
 }
 
 int main(void)

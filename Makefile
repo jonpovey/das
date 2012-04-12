@@ -3,7 +3,7 @@ SRCS := y.tab.c lex.yy.c dasdefs.c das.c
 HDRS := dasdefs.h das.h list.h
 DEPS := $(SRCS) $(HDRS) Makefile
 
-CFLAGS := -Wall
+CFLAGS := -g -Wall
 
 .SUFFIXES:
 #MAKEFLAGS += --no-builtin-rules
