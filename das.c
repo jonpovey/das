@@ -1,8 +1,12 @@
 /* das! */
-
+/*
+ * Copyright 2012 Jon Povey <jon@leetfighter.com>
+ * Released under the GPL v2
+ */
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "das.h"
 #include "dasdefs.h"
@@ -13,63 +17,6 @@ int das_error = 0;
 FILE* binfile;
 
 /*
-instruction value representation
---------------------------------
-
-numbers maybe labels which have to be resolved to numeric values later.
-labels should be stored as a pointer to a label struct (in a list of labels)
-
-numbers can also be constants which are easy
-
-so a number needs to have a type (const or label) and a value (int or ptr)
-
-maybe simplest to represent all values as having:
-	a register: xreg, gpreg, or null
-	a number: const int (maybe 0) or label
-	a flag to say if the access is [indirect]
-	a flag to say register not used (or could be sentinel register value)
-
-register value could be as for machine code values:
-	0-7       gpreg
-	0x18-0x1d xreg
-	-1        "no register"
-
-instruction length of values
-----------------------------
-
-Any with "next word" are +1 word long, others fit in first word.
-"next word" types are:
-	[reg + any num]
-	[any num]
-	any num > 0x1f
-
-labels as literals could be under 0x1f but that could be indeterminate as
-instruction length depends on label value, but label value depends on
-instruction length. So let's say any label is forced to a "next word" literal.
-
-Rules for deciding value length:
-
-val				reg	num	indirect	len	ok
-gpreg			gp	0	0			0	y
-xreg			x	0	0			0	y
-[gpreg]			gp	0	1			0	y
-[gpreg + num]	gp	!0	1			1
-[num]			0	*	1			1	y
-big literal		0	big	0			1
-small literal	0	sm	0			0	y
-
-if (reg == null) {
-	if (indirect == 0 && num.type == const && num.val <= 0x1f)
-		valsize = 0;	// small literal
-	else
-		valsize = 1;	// big literal or [num]
-} else {
-	if (num.type == label || num.value != 0)
-		valsize = 1;	// [gpreg + num]
-	else
-		valsize = 0;	// gpreg, xreg, or [gpreg]
-}
-
 label storage
 -------------
 
@@ -82,11 +29,14 @@ known during parse time, or is it?
 
 */
 
+// need forward decl for circular references
+struct instr;
+
 struct label {
 	char *name;
 	int  value;
-	// line number, or associated statement?
-	struct list_head list;
+	struct instr *def_after;	/* defined at PC after this instruction */
+	struct list_head list;		/* on undefined or defined list */
 };
 
 struct num {
@@ -106,23 +56,67 @@ struct value {
 	u16 nextbits;
 };
 
-struct instruction {
+struct instr {
 	int opcode;
 	struct value* vala;
 	struct value* valb;
-	struct list_head list;
+	int length_known;			/* 0 if unknown (maybe depends on labels) */
+	struct list_head list;		/* for master list of instructions */
 };
 
-/* label list management */
+/*
+ * label list management
+ */
+static LIST_HEAD(defined_labels);	/* labels go on this list when :def found */
+static LIST_HEAD(undefined_labels);	/* on this list if :def not found yet */
 
 static struct label dummy = { .name = "dummy", .value = 0x100 };
 
-struct label* label_exists(char *str)
+/* return label ptr if found (by name) in given list */
+struct label* label_inlist(char *name, struct list_head *head)
+{
+	struct label *l;
+	list_for_each_entry(l, head, list) {
+		if (0 == strcmp(l->name, name))
+			return l;
+	}
+	return NULL;
+}
+
+/* encountered a label, not a labeldef. */
+struct label* label_parse(char *name)
 {
 	// search label list (or hash, tree) for matching label
 	// if it exists, return ptr
 	// else create new label, add to store, return that
 	return &dummy;
+}
+
+/* encountered a labeldef, not a label */
+struct label* labeldef_parse(char *name)
+{
+	struct label *l;
+	l = label_inlist(name, &defined_labels);
+	if (l) {
+		/* error, multiple definition */
+		fprintf(stderr, "error: label '%s' redefinition\n", name);
+		/* bubble it to latest definition.. bad, but consistent */
+		list_move_tail(&l->list, &defined_labels);
+	} else {
+		l = label_inlist(name, &undefined_labels);
+		printf("def for undefined label '%s'\n", name); // dbg
+		/* move to defined labels list */
+		list_move_tail(&l->list, &defined_labels);
+	}
+	if (!l) {
+		l = calloc(1, sizeof *l);
+		l->name = strdup(name);
+		list_add_tail(&l->list, &defined_labels);
+	}
+	/* associate with previous instruction parsed */
+	printf("FIXME\n");
+	// l->def_after = FIXME;
+	return l;
 }
 
 /* test label (somehow) to see if value is resolved yet */
@@ -132,7 +126,9 @@ int label_resolved(struct label *l)
 	return l->value != -1;
 }
 
-/* instruction list management */
+/*
+ * instruction list management
+ */
 static LIST_HEAD(instructions);
 
 /* generate a num for a const */
@@ -150,7 +146,7 @@ struct num* gen_label(char *str)
 	//printf("gen_label: %s\n", str);
 	struct num *n = malloc(sizeof *n);
 	n->islabel = 1;
-	n->label = label_exists(str);
+	n->label = label_parse(str);
 	return n;
 }
 
@@ -169,7 +165,7 @@ struct value* gen_value(int reg, struct num *num, int indirect)
 /* generate an instruction from an opcode and one or two values */
 void gen_instruction(int opcode, struct value *vala, struct value *valb)
 {
-	struct instruction *i = malloc(sizeof *i);
+	struct instr*i = malloc(sizeof *i);
 	i->opcode = opcode;
 	i->vala = vala;
 	i->valb = valb;
@@ -208,7 +204,7 @@ void dump_val(struct value *v)
 		printf("]");
 }
 
-void dump_instruction(struct instruction *i)
+void dump_instruction(struct instr*i)
 {
 	printf("%s ", op2str(i->opcode));
 	dump_val(i->vala);
@@ -301,7 +297,7 @@ u16 val_nextbits(struct value *v)
 }
 
 /* write instruction binary to binfile */
-void writebin_instruction(struct instruction *i)
+void writebin_instruction(struct instr*i)
 {
 	u16 word = 0;
 
@@ -334,7 +330,7 @@ void writebin_instruction(struct instruction *i)
 
 int main(void)
 {
-	struct instruction *instr;
+	struct instr*instr;
 
 	yyparse();
 	if (das_error) {

@@ -1,4 +1,8 @@
 %{
+/*
+ * Copyright 2012 Jon Povey <jon@leetfighter.com>
+ * Released under the GPL v2
+ */
 #include <stdio.h>
 
 #include "das.h"
@@ -28,31 +32,6 @@ void parse_error(char *str);
 %type <intval> gpreg
 
 %%
-
-	/*
-	Assembly constructs
-	-------------------
-	Values can be:
-		Plain general-purpose register name, one of ABCXYZIJ
-		Plain PC, SP or O register
-		Literal value									0x10
-		Absolute memory address e.g. 					[0x1000]
-		Register indirect via gp reg eg 				[A]
-		Base 16-bit literal plus reg offset eg 			[0x1000+A]
-		PUSH, POP or PEEK ([SP++] forms allowed?)
-		Text label: C identifier rules?					myfunc
-
-	All instructions take two arguments except JSR which takes one
-
-	Labels are a colon immediately followed by a valid identifier
-
-	Comments are a semicolon to EOL
-
-	*/
-
-	/*
-	describe a value:
-	*/
 
 program:
 	program line '\n'			{ /*printf("line\n");*/ }

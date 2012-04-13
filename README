@@ -1,0 +1,20 @@
+This is an assembler for the DCPU-16 processor, see http://0x10c.com/
+
+Written by Jon Povey <jon@leetfighter.com> for fun and to learn lex and yacc.
+Comments, patches, abuse welcome.
+
+If you have lex and yacc (flex and bison), GNU make and GCC installed,
+then "make" may build an assembler for you.
+Far from release quality, but enjoy.
+
+This project includes GPLv2 parts from the Linux kernel, so I suppose I'll
+release it GPLv2.
+
+TODO list:
+- actual working labels
+- optimised small literals in the presence of labels
+- compile-time constant expressions [labela - 0x20 + I]
+- freeing of malloc()'d things (whoops!)
+- maybe macros
+
+Fallen my friend, enjoy.

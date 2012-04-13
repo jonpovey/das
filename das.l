@@ -1,4 +1,8 @@
 %{
+/*
+ * Copyright 2012 Jon Povey <jon@leetfighter.com>
+ * Released under the GPL v2
+ */
 void yyerror(char *);
 #include "y.tab.h"
 #include "dasdefs.h"

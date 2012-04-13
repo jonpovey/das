@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012 Jon Povey <jon@leetfighter.com>
+ * Released under the GPL v2
+ */
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>

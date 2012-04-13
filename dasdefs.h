@@ -1,3 +1,7 @@
+/*
+ * Copyright 2012 Jon Povey <jon@leetfighter.com>
+ * Released under the GPL v2
+ */
 #ifndef DASDEFS_H
 #define DASDEFS_H
 
