@@ -26,7 +26,7 @@ op1		JSR
 
 %%
 
-:{label}	{ yylval.stringval = yytext; return LABELDEF; }
+:{label}	{ yylval.stringval = yytext + 1; return LABELDEF; }
 0x{hexdigit}+	return get_constant();
 {digit}+	return get_constant();
 {gpreg}		{ yylval.intval = str2reg(yytext); return GPREG; }
@@ -39,6 +39,9 @@ op1		JSR
 
 [ \t]+		;	/* ignore whitespace */
 ;.*		;	/* comment */
+
+		/* Magic to fix input with missing \n on last line */
+<<EOF>> 	{ static int once = 0; return once++ ? 0 : '\n'; }
 
 .		yyerror("Invalid character ");
 

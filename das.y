@@ -46,7 +46,7 @@ line:
 	;							
 
 labeldef:
-	LABELDEF					{ printf("labeldef "); }
+	LABELDEF					{ labeldef_parse($1); }
 	;
 
 instr:
@@ -83,11 +83,3 @@ void parse_error(char *str)
 	fprintf(stderr, "line %d: parse error: %s\n", get_lineno() - 1, str);
 	das_error = 1;
 }
-
-#if 0
-int main(void)
-{
-	yyparse();
-	return 0;
-}
-#endif
