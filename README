@@ -5,14 +5,17 @@ Comments, patches, abuse welcome.
 
 If you have lex and yacc (flex and bison), GNU make and GCC installed,
 then "make" may build an assembler for you.
+Feed assembly into stdin, binary will be deposited in out.bin (for now).
 Far from release quality, but enjoy.
 
 This project includes GPLv2 parts from the Linux kernel, so I suppose I'll
 release it GPLv2.
 
-TODO list:
+DONE list:
 - actual working labels
 - optimised small literals in the presence of labels
+
+TODO list:
 - compile-time constant expressions [labela - 0x20 + I]
 - freeing of malloc()'d things (whoops!)
 - maybe macros
