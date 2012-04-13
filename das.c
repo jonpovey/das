@@ -291,6 +291,7 @@ int num_getval(struct num *num)
 
 int num_contains_label(struct num *num)
 {
+	//printf("contains label: %d\n", num->islabel);
 	return num->islabel;
 }
 
@@ -418,14 +419,17 @@ u16 val_nextbits(struct value *v)
 /* return true if value is fixed length */
 int value_fixed_len(struct value *val)
 {
-	if (val->known_word_count > 0)
+	if (val->known_word_count > 0) {
+		//printf("fixed: known words\n");
 		return 1;
+	}
 
 	/* only false if label-based literal. */
 	if (!val->indirect && val->num) {
 		/* literal */
-		return num_contains_label(val->num);
+		return !num_contains_label(val->num);
 	}
+	//printf("val not fixed len\n");
 	return 0;
 }
 
@@ -437,8 +441,10 @@ int instr_length(struct instr *i) {
 	int len;
 
 	/* shortcut if entirely static */
-	if (i->length_known > 0)
+	if (i->length_known > 0) {
+		//printf("shortcut: length known: %d\n", i->length_known);
 		return i->length_known;
+	}
 
 	len = 1 + value_needs_nextword(i->vala);
 	if (i->valb)
@@ -446,6 +452,7 @@ int instr_length(struct instr *i) {
 
 	if (value_fixed_len(i->vala) && (!i->valb || value_fixed_len(i->valb))) {
 		/* not going to change, can shortcut next time */
+		//printf("set shortcut: %d\n", len);
 		i->length_known = len;
 	}
 	return len;
@@ -539,7 +546,7 @@ int walk_instructions(void)
 	list_for_each_entry(instr, &instructions, list) {
 		// get instruction length, or best guess
 		pc += instr_length(instr);
-
+		//dump_instruction(instr);
 		/* update value of any labels referencing this instruction */
 		while (label && label->after_instr == instr) {
 			if (label->value != pc) {
@@ -556,6 +563,7 @@ int walk_instructions(void)
 		dump_label(label);
 	}
 
+	printf("    labels changed: %d\n", labels_changed);
 	return labels_changed;
 }
 
