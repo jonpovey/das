@@ -18,7 +18,8 @@ static int get_constant(void);
 letter		[A-Za-z]
 digit		[0-9]
 hexdigit	[0-9a-fA-F]
-label		{letter}({letter}|{digit}|_)*
+labelchar	{letter}|[\._]
+label		{labelchar}({labelchar}|{digit})*
 gpreg		[ABCXYZIJabcxyzij]
 xreg		SP|PC|O|POP|PEEK|PUSH
 op2		SET|ADD|SUB|MUL|DIV|MOD|SH[LR]|AND|[BX]OR|IF[ENGB]

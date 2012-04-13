@@ -16,7 +16,8 @@ DONE list:
 - optimised small literals in the presence of labels
 
 TODO list:
-- compile-time constant expressions [labela - 0x20 + I]
+- strings and DATs and things
+- compile-time constant expressions [label - 0x20 + I]
 - freeing of malloc()'d things (whoops!)
 - maybe macros
 
