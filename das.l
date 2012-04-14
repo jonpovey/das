@@ -21,9 +21,10 @@ hexdigit	[0-9a-fA-F]
 labelchar	{letter}|[\._]
 label		{labelchar}({labelchar}|{digit})*
 gpreg		[ABCXYZIJabcxyzij]
-xreg		SP|PC|O|POP|PEEK|PUSH
+xreg		SP|PC|O|POP|PEEK|PUSH|sp|pc|o|pop|peek|push
 op2		SET|ADD|SUB|MUL|DIV|MOD|SH[LR]|AND|[BX]OR|IF[ENGB]
-op1		JSR
+op2_lc		set|add|sub|mul|div|mod|sh[lr]|and|[bx]or|if[engb]
+op1		JSR|jsr
 
 %%
 
@@ -32,7 +33,7 @@ op1		JSR
 {digit}+	return get_constant();
 {gpreg}		{ yylval.intval = str2reg(yytext); return GPREG; }
 {xreg}		{ yylval.intval = str2reg(yytext); return XREG; }
-{op2}		{ yylval.intval = str2op(yytext); return OP2; }
+{op2}|{op2_lc}	{ yylval.intval = str2op(yytext); return OP2; }
 {op1}		{ yylval.intval = str2op(yytext); return OP1; }
 {label}		{ yylval.stringval = yytext; return LABEL; }
 

@@ -14,9 +14,9 @@ release it GPLv2.
 DONE list:
 - actual working labels
 - optimised small literals in the presence of labels
+- case-insensitivity for more things like instructions (I prefer lowercase)
 
 TODO list:
-- case-insensitivity for more things like instructions (I prefer lowercase)
 - strings and DATs and things
 - compile-time constant expressions [label - 0x20 + I]
 - freeing of malloc()'d things (whoops!)
