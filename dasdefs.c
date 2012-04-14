@@ -59,12 +59,12 @@ int arrsearch(char *str, char **arr, int arrsize)
 }
 
 /* get op value for an opcode string */
-int str2op(char *str)
+int str2opcode(char *str)
 {
 	return arrsearch(str, opcodes, ARRAY_SIZE(opcodes));
 }
 
-char* op2str(int op)
+char* opcode2str(int op)
 {
 	if (op >= 0 && op < ARRAY_SIZE(opcodes))
 		return opcodes[op];

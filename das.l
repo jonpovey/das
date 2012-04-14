@@ -18,8 +18,8 @@ static int get_constant(void);
 letter		[A-Za-z]
 digit		[0-9]
 hexdigit	[0-9a-fA-F]
-labelchar	{letter}|[\.$_]
-label		{labelchar}({labelchar}|{digit})*
+symbolchar	{letter}|[\.$_]
+symbol		{symbolchar}({symbolchar}|{digit})*
 gpreg		[ABCXYZIJabcxyzij]
 xreg		SP|PC|O|POP|PEEK|PUSH|sp|pc|o|pop|peek|push
 op2		SET|ADD|SUB|MUL|DIV|MOD|SH[LR]|AND|[BX]OR|IF[ENGB]
@@ -28,14 +28,14 @@ op1		JSR|jsr
 
 %%
 
-:{label}	{ yylval.stringval = yytext + 1; return LABELDEF; }
+:{symbol}	{ yylval.string = yytext + 1; return LABEL; }
 0x{hexdigit}+	return get_constant();
 {digit}+	return get_constant();
-{gpreg}		{ yylval.intval = str2reg(yytext); return GPREG; }
-{xreg}		{ yylval.intval = str2reg(yytext); return XREG; }
-{op2}|{op2_lc}	{ yylval.intval = str2op(yytext); return OP2; }
-{op1}		{ yylval.intval = str2op(yytext); return OP1; }
-{label}		{ yylval.stringval = yytext; return LABEL; }
+{gpreg}		{ yylval.integer = str2reg(yytext); return GPREG; }
+{xreg}		{ yylval.integer = str2reg(yytext); return XREG; }
+{op2}|{op2_lc}	{ yylval.integer = str2opcode(yytext); return OP2; }
+{op1}		{ yylval.integer = str2opcode(yytext); return OP1; }
+{symbol}	{ yylval.string = yytext; return SYMBOL; }
 
 [,+\[\]\n]	return *yytext;
 
@@ -51,7 +51,7 @@ op1		JSR|jsr
 
 static int get_constant(void)
 {
-	yylval.intval = (int)strtol(yytext, NULL, 0);
+	yylval.integer = (int)strtol(yytext, NULL, 0);
 	return CONSTANT;
 }
 

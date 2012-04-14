@@ -12,8 +12,8 @@ struct reg {
 	u16  valbits;
 };
 
-int str2op(char *str);
-char* op2str(int op);
+int str2opcode(char *str);
+char* opcode2str(int op);
 
 int str2reg(char *str);
 char* reg2str(int reg);

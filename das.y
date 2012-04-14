@@ -15,21 +15,21 @@ void parse_error(char *str);
 %}
 
 %union {
-	int  intval;
-	char *stringval;
-	struct num *numval;
-	struct value *valval;	// errrm
+	int  integer;
+	char *string;
+	struct expr *expr;
+	struct operand *operand;	// errrm
 }
 
-%token <stringval> LABEL LABELDEF
-%token <intval> CONSTANT
-%token <intval> GPREG
-%token <intval> XREG
-%token <intval> OP1 OP2
+%token <string> SYMBOL LABEL
+%token <integer> CONSTANT
+%token <integer> GPREG
+%token <integer> XREG
+%token <integer> OP1 OP2
 
-%type <numval> num
-%type <valval> value
-%type <intval> gpreg
+%type <expr> expr
+%type <operand> operand
+%type <integer> gpreg
 
 %%
 
@@ -41,28 +41,28 @@ program:
 
 line:
 	instr
-	| labeldef
-	| labeldef instr
+	| label
+	| label instr
 	;							
 
-labeldef:
-	LABELDEF					{ labeldef_parse($1); }
+label:
+	LABEL					{ label_parse($1); }
 	;
 
 instr:
-	OP2 value ',' value			{ gen_instruction($1, $2, $4); /*printf("op2 ");*/ }
-	| OP1 value					{ gen_instruction($1, $2, NULL); /*printf("op1 ");*/ }
+	OP2 operand ',' operand		{ gen_instruction($1, $2, $4); /*printf("op2 ");*/ }
+	| OP1 operand				{ gen_instruction($1, $2, NULL); /*printf("op1 ");*/ }
 	| error						{ parse_error("bad instruction "); }
 	;
 
-value:
-	XREG						{ $$ = gen_value($1, NULL, 0); }
-	| gpreg						{ $$ = gen_value($1, NULL, 0); }
-	| num						{ $$ = gen_value(-1, $1, 0); }
-	| '[' gpreg ']'				{ $$ = gen_value($2, NULL, 1); }
-	| '[' num ']'				{ $$ = gen_value(-1, $2, 1); }
-	| '[' num '+' gpreg ']'		{ $$ = gen_value($4, $2, 1); }
-	| '[' gpreg '+' num ']'		{ $$ = gen_value($2, $4, 1); }
+operand:
+	XREG						{ $$ = gen_operand($1, NULL, 0); }
+	| gpreg						{ $$ = gen_operand($1, NULL, 0); }
+	| expr						{ $$ = gen_operand(-1, $1, 0); }
+	| '[' gpreg ']'				{ $$ = gen_operand($2, NULL, 1); }
+	| '[' expr ']'				{ $$ = gen_operand(-1, $2, 1); }
+	| '[' expr '+' gpreg ']'	{ $$ = gen_operand($4, $2, 1); }
+	| '[' gpreg '+' expr ']'	{ $$ = gen_operand($2, $4, 1); }
 	| error						{ parse_error("bad value "); }
 	;
 
@@ -70,9 +70,9 @@ gpreg:
 	GPREG						{ $$ = $1; }
 	;
 
-num:
+expr:
 	CONSTANT					{ $$ = gen_const($1); }
-	| LABEL						{ $$ = gen_label($1); }
+	| SYMBOL					{ $$ = gen_symbol($1); }
 	;
 
 %%

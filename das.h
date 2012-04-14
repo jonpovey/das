@@ -4,11 +4,11 @@
  * Copyright 2012 Jon Povey <jon@leetfighter.com>
  * Released under the GPL v2
  */
-void labeldef_parse(char *name);
-struct num* gen_const(int val);
-struct num* gen_label(char *str);
-struct value* gen_value(int reg, struct num *num, int indirect);
-void gen_instruction(int opcode, struct value *val1, struct value *val2);
+void label_parse(char *name);
+struct expr* gen_const(int val);
+struct expr* gen_symbol(char *str);
+struct operand* gen_operand(int reg, struct expr *expr, int indirect);
+void gen_instruction(int opcode, struct operand *val1, struct operand *val2);
 
 extern int das_error;
 

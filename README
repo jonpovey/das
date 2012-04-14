@@ -12,14 +12,13 @@ This project includes GPLv2 parts from the Linux kernel, so I suppose I'll
 release it GPLv2.
 
 DONE list:
-- actual working labels
-- optimised small literals in the presence of labels
-- case-insensitivity for more things like instructions (I prefer lowercase)
+- optimised small literals in the presence of symbols
+- case-insensitivity for input instructions, register names
 
 TODO list:
+- fix probable bitstream bug when short literal is forced long
+    (will only show up when (expr - symbol) form is supported)
 - strings and DATs and things
-- compile-time constant expressions [label - 0x20 + I]
+- compile-time constant expressions [symbol - 0x20 + I]
 - freeing of malloc()'d things (whoops!)
 - maybe macros
-
-Fallen my friend, enjoy.
