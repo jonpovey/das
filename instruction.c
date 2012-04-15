@@ -1,5 +1,5 @@
 /*
- * das things to do with instructions and opera
+ * das things to do with instructions and operands
  *
  * Copyright 2012 Jon Povey <jon@leetfighter.com>
  * Released under the GPL v2
