@@ -29,6 +29,11 @@ op1		JSR|jsr
 %%
 
 :{symbol}	{ yylval.string = yytext + 1; return LABEL; }
+{symbol}:	{
+				yylval.string = yytext;
+				yytext[strlen(yytext) - 1] = 0;
+				return LABEL;
+			}
 0x{hexdigit}+	return get_constant();
 {digit}+	return get_constant();
 {gpreg}		{ yylval.integer = str2reg(yytext); return GPREG; }

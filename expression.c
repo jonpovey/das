@@ -16,7 +16,9 @@ struct expr {
 	};
 };
 
-/* generate a expr for a const */
+/*
+ * Parse
+ */
 struct expr* gen_const(int val)
 {
 	//printf("gen_const: %d\n", val);
@@ -36,20 +38,15 @@ struct expr* gen_symbol(char *str)
 }
 
 /*
- * dump functions
+ * Analysis
  */
-void dump_expr(struct expr *e)
+
+int expr_contains_symbol(struct expr *expr)
 {
-	if (e->issymbol) {
-		printf("%s(0x%x)", e->symbol->name, e->symbol->value);
-	} else {
-		printf("0x%x", e->value);
-	}
+	//printf("contains symbol: %d\n", expr->issymbol);
+	return expr->issymbol;
 }
 
-/*
- * bit generation
- */
 int expr_value(struct expr *expr)
 {
 	assert(expr);
@@ -60,8 +57,23 @@ int expr_value(struct expr *expr)
 	}
 }
 
-int expr_contains_symbol(struct expr *expr)
+/*
+ * Output
+ */
+
+int expr_print_asm(char *buf, struct expr *e)
 {
-	//printf("contains symbol: %d\n", expr->issymbol);
-	return expr->issymbol;
+	if (e->issymbol) {
+		return symbol_print_asm(buf, e->symbol);
+	} else {
+		return sprintf(buf, "0x%x", e->value);
+	}
+}
+
+/* Cleanup */
+
+void free_expr(struct expr *e)
+{
+	free(e);
+	/* symbols freed separately */
 }

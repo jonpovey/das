@@ -1,6 +1,8 @@
 PROG := das
-SRCS := y.tab.c lex.yy.c dasdefs.c das.c instruction.c symbol.c expression.c
-HDRS := dasdefs.h das.h list.h instruction.h symbol.h expression.h common.h
+SRCS := y.tab.c lex.yy.c dasdefs.c das.c instruction.c symbol.c expression.c \
+		statement.c
+HDRS := dasdefs.h das.h list.h instruction.h symbol.h expression.h common.h \
+		statement.h
 DEPS := $(SRCS) $(HDRS) Makefile
 
 CFLAGS := -g -Wall

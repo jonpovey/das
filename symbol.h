@@ -22,13 +22,14 @@ struct symbol* next_defined_symbol(struct symbol *symbol);
 /* Output */
 void dump_symbol(struct symbol *l);
 void dump_symbols(void);
+int symbol_print_asm(char *buf, struct symbol *sym);
 
 /* Things that should not be exposed, hack hack */
 struct symbol {
 	char *name;
+	int  flags;
 	int  value;
-	struct instr *after_instr;	/* defined at PC after this instruction */
-	struct list_head list;		/* on undefined or defined list */
+	struct list_head list;		/* on all_symbols list */
 };
 
 #endif

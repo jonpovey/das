@@ -6,25 +6,14 @@
  */
 #include "common.h"
 
-static LIST_HEAD(defined_symbols);
-static LIST_HEAD(undefined_symbols);
+enum sym_flags {
+	SYM_LABEL = 0x1,	/* definition label found */
+	SYM_USED  = 0x2,	/* label applied somewhere (expression).. ? */
+	SYM_DEF   = 0x4,	/* explicitly defined (not label) .. ?*/
+};
 
-/* little helper function */
-struct symbol* first_defined_symbol(void)
-{
-	if (list_empty(&defined_symbols))
-		return NULL;
-	else
-		return list_entry(defined_symbols.next, struct symbol, list);
-}
-
-struct symbol* next_defined_symbol(struct symbol *symbol)
-{
-	if (symbol->list.next == &defined_symbols)
-		return NULL; /* no more symbols */
-	else
-		return list_entry(symbol->list.next, struct symbol, list);
-}
+static LIST_HEAD(all_symbols);
+static const struct statement_ops label_statement_ops;
 
 /* return symbol ptr if found (by name) in given list */
 struct symbol* symbol_inlist(char *name, struct list_head *head)
@@ -37,87 +26,103 @@ struct symbol* symbol_inlist(char *name, struct list_head *head)
 	return NULL;
 }
 
-void dump_symbol(struct symbol *l)
+/*
+ * Parse
+ */
+
+struct symbol* symbol_parse(char *name)
 {
-	printf("%s = 0x%x\n", l->name, l->value);
+	// search symbol list (or hash, tree) for matching symbol
+	struct symbol *sym;
+	sym = symbol_inlist(name, &all_symbols);
+	if (!sym) {
+		/* not seen a symbol with this name before */
+		sym = calloc(1, sizeof *sym);
+		sym->name = strdup(name);
+		list_add_tail(&sym->list, &all_symbols);
+	}
+	return sym;
+}
+
+void label_parse(char *name)
+{
+	struct symbol *s;
+	s = symbol_parse(name);
+	if (s->flags & SYM_LABEL) {
+		fprintf(stderr, "Error: label '%s' redefined\n", name);
+		// blow up
+	}
+	s->flags |= SYM_LABEL;
+	add_statement(s, &label_statement_ops);
+}
+
+/*
+ * Analysis
+ */
+
+/*
+ * when a label is called in analysis pass, set its value to PC.
+ * if value changed, return 1
+ */
+static int label_analyse(void *private, int pc)
+{
+	struct symbol *sym = private;
+	if (sym->value != pc) {
+		sym->value = pc;
+		return 1;
+	}
+	return 0;
+}
+
+/*
+ * Output
+ */
+
+void dump_symbol(struct symbol *sym)
+{
+	/* FIXME: print info about if defined yet, etc */
+	if (sym->flags & SYM_LABEL)
+		printf("%s = 0x%x\n", sym->name, sym->value);
+	else
+		printf("%s UNDEFINED\n", sym->name);
 }
 
 void dump_symbols(void)
 {
 	struct symbol *symbol;
 
-	printf("defined symbols:");
-	if (list_empty(&defined_symbols)) {
+	printf("symbols:");
+	if (list_empty(&all_symbols)) {
 		printf(" None\n");
 	} else {
 		printf("\n");
-		list_for_each_entry(symbol, &defined_symbols, list)
-			dump_symbol(symbol);
-	}
-	printf("undefined symbols:");
-	if (list_empty(&undefined_symbols)) {
-		printf(" None\n");
-	} else {
-		printf("\n");
-		list_for_each_entry(symbol, &undefined_symbols, list)
+		list_for_each_entry(symbol, &all_symbols, list)
 			dump_symbol(symbol);
 	}
 }
 
-/* parser encountered a symbol */
-struct symbol* symbol_parse(char *name)
+int symbol_print_asm(char *buf, struct symbol *sym)
 {
-	// search symbol list (or hash, tree) for matching symbol
-	struct symbol *l;
-	l = symbol_inlist(name, &defined_symbols);
-	if (!l)
-		l = symbol_inlist(name, &undefined_symbols);
-	if (!l) {
-		/* not seen a symbol with this name before */
-		l = calloc(1, sizeof *l);
-		l->name = strdup(name);
-		list_add_tail(&l->list, &undefined_symbols);
-	}
-	return l;
+	return sprintf(buf, "%s", sym->name);
 }
 
-/*
- * parser encountered a label, (symbol definition).
- * called from parser, nothing to return, just note label location
- */
-void label_parse(char *name)
+static int label_print_asm(char *buf, void *private)
 {
-	struct symbol *l;
-	l = symbol_inlist(name, &defined_symbols);
-	if (l) {
-		/* error, multiple definition */
-		fprintf(stderr, "error: symbol '%s' redefinition\n", name);
-		/* FIXME bubble it to latest definition.. bad, but consistent */
-		list_move_tail(&l->list, &defined_symbols);
-	} else {
-		l = symbol_inlist(name, &undefined_symbols);
-		if (l) {
-			/* move to defined symbols list */
-			list_move_tail(&l->list, &defined_symbols);
-		}
-	}
-	if (!l) {
-		l = calloc(1, sizeof *l);
-		l->name = strdup(name);
-		list_add_tail(&l->list, &defined_symbols);
-	}
-	/*
-	 * associate with latest instruction parsed.
-	 * if no instructions yet, associate NULL. this is valid and means
-	 * symbol value 0.
-	 */
-	if (list_empty(&instructions)) {
-		//printf("associate label %s with NULL\n", name);
-		l->after_instr = NULL;
-		l->value = 0;
-	} else {
-		l->after_instr = list_entry(instructions.prev, struct instr, list);
-		//printf("associate label %s with instruction %p\n", name,
-		//		l->after_instr);
-	}
+	struct symbol *sym = private;
+	const char *fmt;
+
+	if (options.notch_style)
+		fmt = ":%s";
+	else
+		fmt = "%s:";
+
+	return sprintf(buf, fmt, sym->name);
 }
+
+static const struct statement_ops label_statement_ops = {
+	.analyse         = label_analyse,
+	.get_binary_size = NULL,	/* labels have no binary output */
+	.print_asm       = label_print_asm,
+	.free_private    = NULL,	/* symbols will be freed separately */
+	.type            = STMT_LABEL,
+};

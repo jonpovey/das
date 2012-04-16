@@ -20,5 +20,9 @@ int expr_contains_symbol(struct expr *expr);
 
 /* Output */
 void dump_expr(struct expr *e);
+int expr_print_asm(char *buf, struct expr *e);
+
+/* Cleanup */
+void free_expr(struct expr *e);
 
 #endif

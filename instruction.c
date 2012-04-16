@@ -15,12 +15,17 @@ struct operand {
 	u16 nextbits;
 };
 
-/* all parsed instructions in order encountered */
-LIST_HEAD(instructions);
+struct instr {
+	int opcode;
+	struct operand* a;
+	struct operand* b;
+	int length_known;		/* 0 if unknown (maybe depends on symbols) */
+};
 
 /*
  * Parse phase support
  */
+static struct statement_ops instruction_statement_ops;
 
 /* generate an operand from reg (maybe -1), expr (maybe null), indirect flag */
 struct operand* gen_operand(int reg, struct expr *expr, int indirect)
@@ -42,7 +47,7 @@ void gen_instruction(int opcode, struct operand *a, struct operand *b)
 	i->a = a;
 	i->b = b;
 	//printf("add instruction %p to list\n", i);
-	list_add_tail(&i->list, &instructions);
+	add_statement(i, &instruction_statement_ops);
 }
 
 /*
@@ -191,8 +196,9 @@ int operand_fixed_len(struct operand *o)
  * get instruction length. final length may increase due to symbol value
  * changes (but guaranteed length will never decrease)
  */
-int instr_length(struct instr *i) {
+static int instruction_binary_size(void *private) {
 	int len;
+	struct instr *i = private;
 
 	/* shortcut if entirely static */
 	if (i->length_known > 0) {
@@ -221,9 +227,11 @@ int instr_length(struct instr *i) {
  * TODO make this go away when statements become more generic to accomodate
  * data statements etc.
  */
-void instruction_fwritebin(FILE *f, struct instr *i)
+int instruction_get_binary(u16 *dest, void *private)
 {
 	u16 word = 0;
+	struct instr *i = private;
+	int nwords = 0;
 
 	assert(i->a);
 	operand_genbits(i->a);
@@ -241,49 +249,71 @@ void instruction_fwritebin(FILE *f, struct instr *i)
 		word |= operand_firstbits(i->a) << 4;
 		word |= operand_firstbits(i->b) << 10;
 	}
-	fwrite(&word, 2, 1, f);
+	dest[nwords++] = word;
 	if (operand_needs_nextword(i->a)) {
-		word = operand_nextbits(i->a);
-		fwrite(&word, 2, 1, f);
+		dest[nwords++] = operand_nextbits(i->a);
 	}
 	if (i->b && operand_needs_nextword(i->b)) {
-		word = operand_nextbits(i->b);
-		fwrite(&word, 2, 1, f);
+		dest[nwords++] = operand_nextbits(i->b);
 	}
+	return nwords;
 }
 
-void dump_operand(struct operand *o)
+int operand_print_asm(char *buf, struct operand *o)
 {
+	int count = 0;
+
 	assert(o);
 	if (o->indirect)
-		printf("[");
+		count += sprintf(buf + count, "[");
 	if (o->expr)
-		dump_expr(o->expr);
+		count += expr_print_asm(buf + count, o->expr);
 	if (o->expr && o->reg != -1)
-		printf(" + ");
+		count += sprintf(buf + count, " + ");
 	if (o->reg != -1)
-		printf("%s", reg2str(o->reg));
+		count += sprintf(buf + count, "%s", reg2str(o->reg));
 	if (o->indirect)
-		printf("]");
+		count += sprintf(buf + count, "]");
+	return count;
 }
 
-void dump_instruction(struct instr *i)
+static int instruction_print_asm(char *buf, void *private)
 {
-	printf("%s ", opcode2str(i->opcode));
-	dump_operand(i->a);
+	int count;
+	struct instr *i = private;
+
+	count = sprintf(buf, "%s ", opcode2str(i->opcode));
+	count += operand_print_asm(buf + count, i->a);
 	if (i->b) {
-		printf(", ");
-		dump_operand(i->b);
+		count += sprintf(buf + count, ", ");
+		count += operand_print_asm(buf + count, i->b);
 	}
-	printf("\tlength known: %d\n", i->length_known);
+	return count;
 }
 
-void dump_instructions(void)
+/* cleanup */
+static void free_operand(struct operand *o)
 {
-	struct instr *i;
-	printf("Dump instructions:\n");
-	list_for_each_entry(i, &instructions, list) {
-		printf("\t");
-		dump_instruction(i);
-	}
+	if (o->expr)
+		free_expr(o->expr);
+	free(o);
 }
+
+static void instruction_free_private(void *private)
+{
+	struct instr *i = private;
+	if (i->a)
+		free_operand(i->a);
+	if (i->b)
+		free_operand(i->b);
+	free(i);
+}
+
+static struct statement_ops instruction_statement_ops = {
+	.analyse         = NULL,	/* all done during get-length.. for now */
+	.get_binary_size = instruction_binary_size,
+	.get_binary      = instruction_get_binary,
+	.print_asm       = instruction_print_asm,
+	.free_private    = instruction_free_private,
+	.type            = STMT_INSTRUCTION,
+};
