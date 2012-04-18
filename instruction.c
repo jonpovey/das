@@ -222,11 +222,6 @@ static int instruction_binary_size(void *private) {
  * Output support
  */
 
-/* write instruction binary to binfile */
-/*
- * TODO make this go away when statements become more generic to accomodate
- * data statements etc.
- */
 int instruction_get_binary(u16 *dest, void *private)
 {
 	u16 word = 0;

@@ -5,7 +5,7 @@
  */
 #include <stdio.h>
 
-#include "das.h"
+#include "common.h"
 
 int yylex();
 
@@ -18,18 +18,20 @@ void parse_error(char *str);
 	int  integer;
 	char *string;
 	struct expr *expr;
-	struct operand *operand;	// errrm
+	struct operand *operand;
+	struct dat_elem *dat_elem;
 }
 
-%token <string> SYMBOL LABEL
+%token <string> SYMBOL LABEL STRING
 %token <integer> CONSTANT
 %token <integer> GPREG
 %token <integer> XREG
-%token <integer> OP1 OP2
+%token <integer> OP1 OP2 DAT
 
 %type <expr> expr
 %type <operand> operand
 %type <integer> gpreg
+%type <dat_elem> dat_elem datlist
 
 %%
 
@@ -40,18 +42,23 @@ program:
 	;
 
 line:
-	instr
+	statement
 	| label
-	| label instr
+	| label statement
 	;							
 
 label:
-	LABEL					{ label_parse($1); }
+	LABEL						{ label_parse($1); }
+	;
+
+statement:
+	dat
+	| instr
 	;
 
 instr:
-	OP2 operand ',' operand		{ gen_instruction($1, $2, $4); /*printf("op2 ");*/ }
-	| OP1 operand				{ gen_instruction($1, $2, NULL); /*printf("op1 ");*/ }
+	OP2 operand ',' operand		{ gen_instruction($1, $2, $4); }
+	| OP1 operand				{ gen_instruction($1, $2, NULL); }
 	| error						{ parse_error("bad instruction "); }
 	;
 
@@ -73,6 +80,21 @@ gpreg:
 expr:
 	CONSTANT					{ $$ = gen_const($1); }
 	| SYMBOL					{ $$ = gen_symbol($1); }
+	;
+
+dat:
+	DAT datlist					{ gen_dat($2); }
+	;
+
+datlist:
+	dat_elem
+	| dat_elem ',' datlist		{ $$ = dat_elem_follows($1, $3); }
+	;
+
+dat_elem:
+	expr						{ $$ = new_expr_dat_elem($1); }
+	| STRING					{ $$ = new_string_dat_elem($1); }
+	/* maybe 8bit char array etc later */
 	;
 
 %%

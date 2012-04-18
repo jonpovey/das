@@ -8,6 +8,7 @@
 
 #include "das.h"
 #include "dasdefs.h"
+#include "dat.h"
 #include "expression.h"
 #include "instruction.h"
 #include "list.h"

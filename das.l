@@ -30,17 +30,19 @@ op1		JSR|jsr
 
 :{symbol}	{ yylval.string = yytext + 1; return LABEL; }
 {symbol}:	{
-				yylval.string = yytext;
-				yytext[strlen(yytext) - 1] = 0;
-				return LABEL;
-			}
+			yylval.string = yytext;
+			yytext[strlen(yytext) - 1] = 0;
+			return LABEL;
+		}
 0x{hexdigit}+	return get_constant();
 {digit}+	return get_constant();
 {gpreg}		{ yylval.integer = str2reg(yytext); return GPREG; }
 {xreg}		{ yylval.integer = str2reg(yytext); return XREG; }
 {op2}|{op2_lc}	{ yylval.integer = str2opcode(yytext); return OP2; }
 {op1}		{ yylval.integer = str2opcode(yytext); return OP1; }
+DAT|dat		{ return DAT; }
 {symbol}	{ yylval.string = yytext; return SYMBOL; }
+\"(\\.|[^\\"])*\" { yylval.string = yytext; return STRING; }
 
 [,+\[\]\n]	return *yytext;
 
