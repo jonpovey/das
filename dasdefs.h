@@ -21,6 +21,8 @@ u16 reg2bits(int reg);
 
 void yyerror(char *);
 
+int unescape_c_string(const char *src, unsigned char *dest);
+int sprint_cstring(char *buf, const unsigned char *str, int bytes);
 
 #define ERR_ON(x) ({ int r = !!(x); \
 	if (r) { \

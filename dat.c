@@ -7,9 +7,10 @@ enum dat_types {
 
 struct dat_elem {
 	int type;
+	int nwords;
 	union {
 		struct expr *expr;
-		char *string;
+		unsigned char *data;	/* string */
 	};
 	struct dat_elem *next;
 };
@@ -41,17 +42,25 @@ struct dat_elem* new_expr_dat_elem(struct expr *expr)
 {
 	struct dat_elem *e = calloc(sizeof(*e), 1);
 	e->type = DATTYPE_EXPR;
+	e->nwords = 1;
 	e->expr = expr;
 	/* next is null */
 	return e;
 }
 
-struct dat_elem* new_string_dat_elem(const char *str)
+struct dat_elem* new_string_dat_elem(char *str)
 {
 	struct dat_elem *e = calloc(sizeof(*e), 1);
+	size_t len = strlen(str);
+
+	printf("string dat: %s becomes:\n", str);
+	str[len - 1] = 0;				/* chop off trailing quote */
 	e->type = DATTYPE_STRING;
-	e->string = strdup(str);
-	/* next is null */
+	e->data = malloc(strlen(str));
+	/* e->data will be less one ", making space for NULL terminator */
+	e->nwords = unescape_c_string(str + 1, e->data);
+	printf("'%s'\n", (char*)e->data);
+	/* e->next is null */
 	return e;
 }
 
@@ -69,13 +78,7 @@ static int dat_binary_size(void *private)
 	struct dat_elem *e = dat->first;
 
 	while (e) {
-		if (e->type == DATTYPE_STRING) {
-			/* fixme for strings, they contain escapes.. */
-			words += strlen("FIXME");
-		} else {
-			/* all exprs take one word */
-			words++;
-		}
+		words += e->nwords;
 		e = e->next;
 	}
 	return words;
@@ -86,11 +89,14 @@ static int dat_get_binary(u16 *dest, void *private)
 	int words = 0;
 	struct dat *dat = private;
 	struct dat_elem *e = dat->first;
+	int i;
 
 	while (e) {
 		if (e->type == DATTYPE_STRING) {
-			/* fixme for strings, they contain escapes.. */
-			words += strlen("FIXME");
+			for (i = 0; i < e->nwords; i++) {
+				*(dest + words) = e->data[i];
+				words++;
+			}
 		} else {
 			*(dest + words) = (u16)expr_value(e->expr);
 			words++;
@@ -110,7 +116,9 @@ static int dat_print_asm(char *buf, void *private)
 	while (e) {
 		if (e->type == DATTYPE_STRING) {
 			/* fixme for strings, they contain escapes.. */
-			count += sprintf(buf + count, "\"FIXME\"");
+			count += sprintf(buf + count, "\"");
+			count += sprint_cstring(buf + count, e->data, e->nwords);
+			count += sprintf(buf + count, "\"");
 		} else {
 			count += expr_print_asm(buf + count, e->expr);
 		}
@@ -133,7 +141,7 @@ void dat_free_private(void *private)
 	while (e) {
 		next = e->next;
 		if (e->type == DATTYPE_STRING) {
-			free(e->string);
+			free(e->data);
 		} else {
 			free_expr(e->expr);
 		}

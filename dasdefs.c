@@ -3,7 +3,9 @@
  * Released under the GPL v2
  */
 #include <assert.h>
+#include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "dasdefs.h"
@@ -97,4 +99,127 @@ u16 reg2bits(int reg)
 {
 	assert(reg >= 0 && reg < ARRAY_SIZE(registers));
 	return registers[reg].valbits;
+}
+
+inline int isoctal(int c) { return c >= '0' && c <= '7'; }
+
+/*
+ * unescape C string into provided buffer, which must be large enough.
+ * result will be max strlen(src) + 1 characters
+ * return number of characters (there may be embedded NULLs)
+ */
+int unescape_c_string(const char *src, unsigned char *dest)
+{
+	int n = 0;
+	unsigned char c;
+	char tmphex[3];
+
+	while (*src) {
+		c = 0;
+		if (*src != '\\') {
+			*dest++ = *src++;
+			n++;
+			continue;
+		}
+
+		/* escape sequence? */
+		src++;
+		if (!*src) {
+			/* end of string was a backslash by itself. How? */
+			fprintf(stderr, "string ends in backslash?\n");
+			*dest++ = '\\';
+			n++;
+			break;
+		}
+
+		/* yes, it's an escape sequence */
+		if (*src >= '0' && *src <= '3') {
+			/* maybe start octal sequence? */
+			if (isoctal(src[1]) && isoctal(src[2])) {
+				c = (src[0] - '0') << 6 |
+					(src[1] - '0') << 3 |
+					(src[2] - '0');
+				src += 2;				/* one more will be added shortly */
+			} else if (*src == '0') {
+				/* not followed by octal, treat as plain NULL */
+				c = 0;
+			} else {
+				/* bad octal escape, treat as character */
+				c = *src;
+			}
+		} else if (*src == 'x' && isxdigit(src[1]) && isxdigit(src[2])) {
+			/* it's hex */
+			tmphex[0] = src[1];
+			tmphex[1] = src[2];
+			tmphex[2] = 0;
+			c = (char)strtol(tmphex, NULL, 16);
+			src += 2;		/* one more will be added shortly */
+		} else {
+			/* escape sequence, not hex or octal or \0 NULL */
+			switch (*src) {
+			case 'a': c = '\a'; break;
+			case 'b': c = '\b'; break;
+			case 'f': c = '\f'; break;
+			case 'n': c = '\n'; break;
+			case 'r': c = '\r'; break;
+			case 't': c = '\t'; break;
+			case 'v': c = '\v'; break;
+			default:
+				/* this covers [\?'"] */
+				c = *src;
+			}
+		}
+		*dest++ = c;
+		src++;
+		n++;
+	}
+	*dest = 0;	// terminate in case we want to print it unescaped
+	return n;
+}
+
+/* re-escape the string for printing */
+int sprint_cstring(char *buf, const unsigned char *in, int bytes)
+{
+	char *start = buf;
+	char hexdigit[] = "0123456789abcdef";
+	char c;
+
+	while (bytes--) {
+		int esc = 1;
+		
+		switch (*in) {
+		case '\"':
+		case '\\':
+			c = *in;	/* escape as themselves */
+			break;
+		case '\n': c = 'n'; break;
+		case '\t': c = 't'; break;
+		case '\r': c = 'r'; break;
+		default:
+			esc = 0;
+		}
+
+		if (esc) {
+			*buf++ = '\\';
+			*buf++ = c;
+			in++;
+			continue;
+		}
+
+		if (*in > 0x1f && *in < 0x7f) {
+			/* printable 7-bit ASCII */
+			*buf++ = *in++;
+		} else if (!*in) {
+			*buf++ = '\\';
+			*buf++ = '0';
+			in++;
+		} else {
+			*buf++ = '\\';
+			*buf++ = 'x';
+			*buf++ = hexdigit[*in >> 4];
+			*buf++ = hexdigit[*in & 0xf];
+			in++;
+		}
+	}
+	return buf - start;
 }

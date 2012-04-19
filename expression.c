@@ -66,7 +66,13 @@ int expr_print_asm(char *buf, struct expr *e)
 	if (e->issymbol) {
 		return symbol_print_asm(buf, e->symbol);
 	} else {
-		return sprintf(buf, "0x%x", e->value);
+		/* warn or something if truncating to 16-bit? */
+		if (e->value < 0xf) {
+			/* print small numbers as decimal without 0x */
+			return sprintf(buf, "%d", e->value);
+		} else {
+			return sprintf(buf, "0x%x", e->value);
+		}
 	}
 }
 

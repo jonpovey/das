@@ -14,13 +14,16 @@ release it GPLv2.
 DONE list:
 - optimised small literals in the presence of symbols
 - case-insensitivity for input instructions, register names
+- strings and DATs and things
+- pretty printed annotated assembler output with PC and machine code
+- freeing of most malloc()'d things
 
 TODO list:
+- command-line options
+- compile-time constant expressions [symbol - 0x20 + I]
 - fix probable bitstream bug when short literal is forced long
     (will only show up when (expr - symbol) form is supported)
-- strings and DATs and things
-- compile-time constant expressions [symbol - 0x20 + I]
-- freeing of malloc()'d things (whoops!)
+- free() symbols
 - maybe macros
 - support local symbols?
 - label redefinition semantics maybe unusual (latest wins)

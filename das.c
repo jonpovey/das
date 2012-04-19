@@ -25,6 +25,7 @@ struct options options = {
 	.asm_main_col = 15,
 	.asm_print_hex = 1,
 	.asm_hex_col  = 60,
+	.asm_max_cols = 80,
 	.notch_style  = 1,
 };
 

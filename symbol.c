@@ -119,6 +119,9 @@ static int label_print_asm(char *buf, void *private)
 	return sprintf(buf, fmt, sym->name);
 }
 
+/* Cleanup */
+// FIXME free symbols
+
 static const struct statement_ops label_statement_ops = {
 	.analyse         = label_analyse,
 	.get_binary_size = NULL,	/* labels have no binary output */

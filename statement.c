@@ -157,6 +157,35 @@ int statements_get_binary(u16 **dest)
 }
 
 /*
+ * helper for statements_fprint_asm()
+ * update *lines as we go. Don't print a newline at the end of the last line,
+ * do_eol handler will do it.
+ *
+ * why do I sprintf() to a line buffer in the parent function but use fprintf()
+ * here? Good question!
+ */
+void fprint_bin_chunk(FILE *f, u16 *binbuf, int binwords, int start_col,
+						int pc, int *lines)
+{
+	int i;
+	int col;
+
+	for (i = 0; binwords; --binwords, i++, pc++) {
+		if (0 == i % 8) {
+			/* new line */
+			fprintf(f, "\n");
+			col = 0;
+			if (options.asm_print_pc)
+				col += fprintf(f, "%04x ", pc);
+
+			/* pad to start column */
+			col += fprintf(f, "%*c;", start_col - col, ' ');
+		}
+		fprintf(f, " %04x", binbuf[i]);
+	}
+}
+
+/*
  * Write assembler representation of all statements to stream.
  * return number of lines written or -1 on error.
  * (0 lines might also be considered an input error)
@@ -223,17 +252,30 @@ int statements_fprint_asm(FILE *f)
 			if (col < options.asm_hex_col) {
 				pad = options.asm_hex_col - col;
 			}
-			col += sprintf(linebuf + col, "%*c", pad, ' ');
 
 			ret = s->ops->get_binary(binbuf, s->private);
 			if (ret != binwords) {
 				fprintf(stderr, "binwords mismatch!\n");
 				return -1;
 			}
-			/* revisit for very long things like DAT */
-			col += sprintf(linebuf + col, ";");
-			for (i = 0; i < binwords; i++)
-				col += sprintf(linebuf + col, " %04x", binbuf[i]);
+			
+			/* will the binary fit on this line? */
+			if (col + pad + binwords * 5 + 2 > options.asm_max_cols) {
+				/* nope. finish this line first then (no newline)*/
+				fprintf(f, "%s", linebuf);
+				lines++;
+				col = 0;
+
+				/* call helper to print chunk */
+				fprint_bin_chunk(f, binbuf, binwords, asm_main_col + 4, pc,
+								&lines);
+			} else {
+				/* fits on line */
+				col += sprintf(linebuf + col, "%*c", pad, ' ');
+				col += sprintf(linebuf + col, ";");
+				for (i = 0; i < binwords; i++)
+					col += sprintf(linebuf + col, " %04x", binbuf[i]);
+			}
 		}
 
 		if (do_eol) {

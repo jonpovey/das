@@ -11,6 +11,7 @@ extern struct options {
 	int asm_main_col;
 	int asm_print_hex;
 	int asm_hex_col;
+	int asm_max_cols;
 	int notch_style;
 } options;
 
