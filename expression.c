@@ -4,17 +4,60 @@
  * Copyright 2012 Jon Povey <jon@leetfighter.com>
  * Released under the GPL v2
  *
- * Simple for now, todo later: more complex compile-time expressions
  */
 #include "common.h"
+#include "y.tab.h"
+
+enum expr_type {
+	EXPR_SYMBOL,
+	EXPR_CONSTANT,
+	EXPR_OPERATOR,
+};
 
 struct expr {
-	int issymbol;
+	int type;
+	int maychange;
+	int value;			/* valid shortcut if maychange = 0 */
 	union {
-		int value;
 		struct symbol *symbol;
+		int op;
 	};
+	struct expr *left;	/* wasted space if not an operator node */
+	struct expr *right;
 };
+
+/* internal unconditional (re)calculation */
+static int expr_value_calc(struct expr *e)
+{
+	int right, left;
+
+	assert(e);
+	if (e->type == EXPR_SYMBOL) {
+		return e->symbol->value;
+	} else if (e->type == EXPR_CONSTANT) {
+		return e->value;
+	}
+	/* operator */
+	right = expr_value(e->right);
+	switch (e->op) {
+	case UMINUS: return - expr_value(e->right);
+	case '~': return ~ expr_value(e->right);
+	case '(': return expr_value(e->right);		/* (expr) is a no-op */
+	}
+
+	left = expr_value(e->left);
+	switch (e->op) {
+	case '-': return left - right;
+	case '+': return left + right;
+	case '*': return left * right;
+	case '/': return left / right;
+	case LSHIFT: return left << right;
+	case RSHIFT: return left >> right;
+	default:
+		fprintf(stderr, "BUG: unhandled operator %d\n", e->op);
+	}
+	return -1;
+}
 
 /*
  * Parse
@@ -22,8 +65,9 @@ struct expr {
 struct expr* gen_const(int val)
 {
 	//printf("gen_const: %d\n", val);
-	struct expr *e = malloc(sizeof *e);
-	e->issymbol = 0;
+	struct expr *e = calloc(sizeof *e, 1);
+	e->type = EXPR_CONSTANT;
+	e->maychange = 0;
 	e->value = val;
 	return e;
 }
@@ -31,9 +75,35 @@ struct expr* gen_const(int val)
 struct expr* gen_symbol(char *str)
 {
 	//printf("gen_symbol: %s\n", str);
-	struct expr *e = malloc(sizeof *e);
-	e->issymbol = 1;
+	struct expr *e = calloc(sizeof *e, 1);
+	e->type = EXPR_SYMBOL;
+	e->maychange = 1;
+	e->value = 0;
 	e->symbol = symbol_parse(str);
+	return e;
+}
+
+struct expr* expr_op(int op, struct expr* left, struct expr* right)
+{
+	struct expr *e;
+
+	assert(right);
+	if (op != UMINUS && op != '~' && op != '(')
+		assert(left);
+
+	e = calloc(sizeof *e, 1);
+	e->type = EXPR_OPERATOR;
+	e->op = op;
+	e->left = left;
+	e->right = right;
+
+	if ((left && left->maychange) || (right && right->maychange)) {
+		e->maychange = 1;
+	} else {
+		/* no symbols in subexpression, value can be known now */
+		e->maychange = 0;
+		e->value = expr_value_calc(e);	/* force calculation */
+	}
 	return e;
 }
 
@@ -41,20 +111,19 @@ struct expr* gen_symbol(char *str)
  * Analysis
  */
 
-int expr_contains_symbol(struct expr *expr)
+int expr_maychange(struct expr *e)
 {
-	//printf("contains symbol: %d\n", expr->issymbol);
-	return expr->issymbol;
+	assert(e);
+	return e->maychange;
 }
 
-int expr_value(struct expr *expr)
+int expr_value(struct expr *e)
 {
-	assert(expr);
-	if (expr->issymbol) {
-		return expr->symbol->value;
-	} else {
-		return expr->value;
-	}
+	assert(e);
+	if (e->maychange)
+		return expr_value_calc(e);
+	else
+		return e->value;
 }
 
 /*
@@ -63,9 +132,12 @@ int expr_value(struct expr *expr)
 
 int expr_print_asm(char *buf, struct expr *e)
 {
-	if (e->issymbol) {
+	int n = 0;
+
+	/* could do resolved value printing with a toggle */
+	if (e->type == EXPR_SYMBOL) {
 		return symbol_print_asm(buf, e->symbol);
-	} else {
+	} else if (e->type == EXPR_CONSTANT) {
 		/* warn or something if truncating to 16-bit? */
 		if (e->value < 0xf) {
 			/* print small numbers as decimal without 0x */
@@ -74,12 +146,38 @@ int expr_print_asm(char *buf, struct expr *e)
 			return sprintf(buf, "0x%x", e->value);
 		}
 	}
+
+	/* else, operator */
+	if (e->op == '(')
+		n += sprintf(buf + n, "(");
+	if (e->left)
+		n += expr_print_asm(buf + n, e->left);
+	switch (e->op) {
+	case UMINUS: n += sprintf(buf + n, "-"); break;
+	case '~':    n += sprintf(buf + n, "~"); break;
+	case '+':    n += sprintf(buf + n, " + "); break;
+	case '-':    n += sprintf(buf + n, " - "); break;
+	case '*':    n += sprintf(buf + n, " * "); break;
+	case '/':    n += sprintf(buf + n, " / "); break;
+	case LSHIFT: n += sprintf(buf + n, " << "); break;
+	case RSHIFT: n += sprintf(buf + n, " >> "); break;
+	/* default nothing, parens */
+	}
+	if (e->right)
+		n += expr_print_asm(buf + n, e->right);
+	if (e->op == '(')
+		n += sprintf(buf + n, ")");
+	return n;
 }
 
 /* Cleanup */
 
 void free_expr(struct expr *e)
 {
+	if (e->right)
+		free(e->right);
+	if (e->left)
+		free(e->left);
 	free(e);
 	/* symbols freed separately */
 }

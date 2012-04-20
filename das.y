@@ -27,11 +27,18 @@ void parse_error(char *str);
 %token <integer> GPREG
 %token <integer> XREG
 %token <integer> OP1 OP2 DAT
+%token <integer> OPERATOR
+%token <integer> LSHIFT RSHIFT
 
 %type <expr> expr
 %type <operand> operand
 %type <integer> gpreg
 %type <dat_elem> dat_elem datlist
+
+%left LSHIFT RSHIFT
+%left '+' '-'
+%left '*' '/'
+%nonassoc UMINUS
 
 %%
 
@@ -80,6 +87,15 @@ gpreg:
 expr:
 	CONSTANT					{ $$ = gen_const($1); }
 	| SYMBOL					{ $$ = gen_symbol($1); }
+	| '-' expr %prec UMINUS 	{ $$ = expr_op(UMINUS, NULL, $2); }
+	| '~' expr					{ $$ = expr_op('~', NULL, $2); }
+	| expr '+' expr				{ $$ = expr_op('+', $1, $3); }
+	| expr '-' expr				{ $$ = expr_op('-', $1, $3); }
+	| expr '*' expr				{ $$ = expr_op('*', $1, $3); }
+	| expr '/' expr				{ $$ = expr_op('/', $1, $3); }
+	| expr LSHIFT expr			{ $$ = expr_op(LSHIFT, $1, $3); }
+	| expr RSHIFT expr			{ $$ = expr_op(RSHIFT, $1, $3); }
+	| '(' expr ')'				{ $$ = expr_op('(', NULL, $2); }
 	;
 
 dat:

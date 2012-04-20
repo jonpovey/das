@@ -73,7 +73,7 @@ int operand_word_count(struct operand *o)
 			if (expr_value(o->expr) < 0x20) {
 				/* small.. at least for now */
 				words = 1;
-				maychange = expr_contains_symbol(o->expr);
+				maychange = expr_maychange(o->expr);
 			} else {
 				words = 2;
 			}
@@ -186,7 +186,7 @@ int operand_fixed_len(struct operand *o)
 	/* only false if symbol-based literal. */
 	if (!o->indirect && o->expr) {
 		/* literal */
-		return !expr_contains_symbol(o->expr);
+		return !expr_maychange(o->expr);
 	}
 	//printf("operand not fixed len\n");
 	return 0;

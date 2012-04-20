@@ -43,8 +43,10 @@ op1		JSR|jsr
 DAT|dat		{ return DAT; }
 {symbol}	{ yylval.string = yytext; return SYMBOL; }
 \"(\\.|[^\\"])*\" { yylval.string = yytext; return STRING; }
+\<\<		return LSHIFT;
+\>\>		return RSHIFT;
 
-[,+\[\]\n]	return *yytext;
+[-,+*/()~\[\]\n]	return *yytext;
 
 [ \t]+		;	/* ignore whitespace */
 ;.*		;	/* comment */

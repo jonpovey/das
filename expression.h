@@ -13,10 +13,11 @@ struct expr;
 /* Parse */
 struct expr* gen_const(int val);
 struct expr* gen_symbol(char *str);
+struct expr* expr_op(int op, struct expr* left, struct expr* right);
 
 /* Analyse */
 int expr_value(struct expr *expr);
-int expr_contains_symbol(struct expr *expr);
+int expr_maychange(struct expr *expr);
 
 /* Output */
 void dump_expr(struct expr *e);
