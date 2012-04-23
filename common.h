@@ -12,6 +12,7 @@
 #include "expression.h"
 #include "instruction.h"
 #include "list.h"
+#include "output.h"
 #include "statement.h"
 #include "symbol.h"
 

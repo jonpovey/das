@@ -50,7 +50,7 @@ void label_parse(char *name)
 	s = symbol_parse(name);
 	if (s->flags & SYM_LABEL) {
 		fprintf(stderr, "Error: label '%s' redefined\n", name);
-		// blow up
+		das_error = 1;
 	}
 	s->flags |= SYM_LABEL;
 	add_statement(s, &label_statement_ops);
@@ -68,6 +68,7 @@ static int label_analyse(void *private, int pc)
 {
 	struct symbol *sym = private;
 	if (sym->value != pc) {
+		DBG("label %s changed: %d -> %d\n", sym->name, sym->value, pc);
 		sym->value = pc;
 		return 1;
 	}
@@ -120,7 +121,17 @@ static int label_print_asm(char *buf, void *private)
 }
 
 /* Cleanup */
-// FIXME free symbols
+void symbols_free(void)
+{
+	struct symbol *sym, *temp;
+
+	list_for_each_entry_safe(sym, temp, &all_symbols, list) {
+		assert(sym->name);
+		free(sym->name);
+		free(sym);
+	}
+	INIT_LIST_HEAD(&all_symbols);
+}
 
 static const struct statement_ops label_statement_ops = {
 	.analyse         = label_analyse,

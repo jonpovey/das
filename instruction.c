@@ -126,19 +126,18 @@ void operand_genbits(struct operand *o)
 		ERR_ON(o->expr);
 	} else if (o->reg < 0) {
 		/* no reg. have a expr. */
-		if (o->indirect || exprval > 0x1f) {
-			if (o->indirect) {
-				/* [next word] form */
-				o->firstbits = 0x1e;
-			} else {
-				/* next word literal */
-				o->firstbits = 0x1f;
-			}
-			o->nextbits = (u16)exprval;
+		if (o->indirect) {
+			/* [next word] form */
+			o->firstbits = 0x1e;
 			words = 2;
-		} else {
+		} else if (o->known_word_count == 1) {
 			/* small literal */
+			ERR_ON(exprval > 0x1f);
 			o->firstbits = 0x20 | (u16)exprval;
+		} else {
+			/* next word literal */
+			o->firstbits = 0x1f;
+			words = 2;
 		}
 	} else {
 		/* gpreg in some form */

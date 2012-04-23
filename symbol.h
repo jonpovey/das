@@ -24,6 +24,9 @@ void dump_symbol(struct symbol *l);
 void dump_symbols(void);
 int symbol_print_asm(char *buf, struct symbol *sym);
 
+/* Cleanup */
+void symbols_free(void);
+
 /* Things that should not be exposed, hack hack */
 struct symbol {
 	char *name;

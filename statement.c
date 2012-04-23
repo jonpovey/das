@@ -41,39 +41,30 @@ void add_statement(void *private, const struct statement_ops *ops)
 
 /*
  * Do one analysis pass of all statements; this used to be walk_instructions()
- * Compute statement size if known[1].
- * Maintain a running total of statement sizes (PC value).
+ * Compute statement size and maintain a running total (PC value).
  *
  * Labels are included in this statement list and will get their value set
  * in the analyse call.
  *
- * [1] Instruction size may not be known with literals that contain symbols,
+ * Instruction size may not be known with literals that contain symbols,
  * if we aren't yet sure of symbol value. In this case assume we can use a short
  * literal until symbol is known.
  *
  * Call this function more than once.
  * On the first pass, symbols defined later will have unknown value.
- * On the second pass, symbols will have a possibly-correct value and some
- * instruction lengths may increase[2] due to literals becoming too long and
- * requiring the next-word literal form. 
+ * On future passes, symbols will have a possibly-correct value, instruction
+ * lengths may change due to literal value fitting in short form or not.
  *
- * statements can only become longer. Keep running this function until no
- * symbol values change (function returns 0).
+ * It is possible to write constant expressions such that a literal can
+ * change from greater than to less than 0x20, no longer requiring a next-word.
+ * It is also possible to write code that would trap a naive optimiser in an
+ * infinte loop, e.g.
+ *   :from  SET C, from + 33 - to
+ *   :to
+ * This must be assembled as a next-word literal of value 0x1f.
  *
- * In a pathological case (needing compile-time constant expressions and a
- * deliberate attempt at breakage, I think), this "bubbling-up" may have to
- * run many times, but not more times than there are instructions.
- *
- * [2] If later I implement compile-time constant expressions, a symbol could
- * change value such that a literal became smaller, e.g. (0x40 - foo) if
- * foo changes from 0x20 to 0x21, the literal would become 0x1f and no longer
- * require a next-word.
- * To guard against a potential infinite loop I intend to not permit
- * literals to become smaller. If they ever need a next-word, set a
- * "using next-word" flag for them and even if the value reduces, still use
- * next-word form.
- *
- * I should test that handling. Yes, I am paranoid.
+ * At the moment this is handled by never allowing an instruction to become
+ * shorter.
  *
  * Return value: number of symbols whose value changed on this run
  */
@@ -303,4 +294,5 @@ void statements_free(void)
 			s->ops->free_private(s->private);
 		free(s);
 	}
+	INIT_LIST_HEAD(&statements);
 }

@@ -46,7 +46,7 @@ DAT|dat		{ return DAT; }
 \<\<		return LSHIFT;
 \>\>		return RSHIFT;
 
-[-,+*/()~\[\]\n]	return *yytext;
+[-,+*/|&^()~\[\]\n]	return *yytext;
 
 [ \t]+		;	/* ignore whitespace */
 ;.*		;	/* comment */

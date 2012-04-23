@@ -35,10 +35,13 @@ void parse_error(char *str);
 %type <integer> gpreg
 %type <dat_elem> dat_elem datlist
 
+%left '|'
+%left '^'
+%left '&'
 %left LSHIFT RSHIFT
 %left '+' '-'
 %left '*' '/'
-%nonassoc UMINUS
+%nonassoc UMINUS '~'
 
 %%
 
@@ -88,11 +91,14 @@ expr:
 	CONSTANT					{ $$ = gen_const($1); }
 	| SYMBOL					{ $$ = gen_symbol($1); }
 	| '-' expr %prec UMINUS 	{ $$ = expr_op(UMINUS, NULL, $2); }
-	| '~' expr					{ $$ = expr_op('~', NULL, $2); }
+	| '~' expr %prec '~'		{ $$ = expr_op('~', NULL, $2); }
 	| expr '+' expr				{ $$ = expr_op('+', $1, $3); }
 	| expr '-' expr				{ $$ = expr_op('-', $1, $3); }
 	| expr '*' expr				{ $$ = expr_op('*', $1, $3); }
 	| expr '/' expr				{ $$ = expr_op('/', $1, $3); }
+	| expr '^' expr				{ $$ = expr_op('^', $1, $3); }
+	| expr '&' expr				{ $$ = expr_op('&', $1, $3); }
+	| expr '|' expr				{ $$ = expr_op('|', $1, $3); }
 	| expr LSHIFT expr			{ $$ = expr_op(LSHIFT, $1, $3); }
 	| expr RSHIFT expr			{ $$ = expr_op(RSHIFT, $1, $3); }
 	| '(' expr ')'				{ $$ = expr_op('(', NULL, $2); }

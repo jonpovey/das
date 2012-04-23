@@ -37,7 +37,7 @@ int main(void)
 
 	yyparse();
 	if (das_error) {
-		printf("error, abort\n");
+		printf("Aborting from parse error\n");
 		return 1;
 	}
 
@@ -80,5 +80,6 @@ int main(void)
 	fclose(binfile);
 	free(binary);
 	statements_free();
+	symbols_free();
 	return 0;
 }

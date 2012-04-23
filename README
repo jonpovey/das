@@ -6,24 +6,25 @@ Comments, patches, abuse welcome.
 If you have lex and yacc (flex and bison), GNU make and GCC installed,
 then "make" may build an assembler for you.
 Feed assembly into stdin, binary will be deposited in out.bin (for now).
-Far from release quality, but enjoy.
 
 This project includes GPLv2 parts from the Linux kernel, so I suppose I'll
 release it GPLv2.
 
-DONE list:
-- optimised small literals in the presence of symbols
-- case-insensitivity for input instructions, register names
-- strings and DATs and things
-- pretty printed annotated assembler output with PC and machine code
-- freeing of most malloc()'d things
+Features:
+- Case-insensitive regarding opcodes and register names
+- Compile-time constant expressions supporting most C arithmetic and bitwise
+  operators, and parentheses e.g.
+	SET A, [(labelA - labelB) * 0xff >> 3]
+	DAT label + 2
+- Strings support C escape sequences e.g. "\x0f\t1f CHARACTERS\n\0"
+- Optimised small literals in the presence of symbols
+- Forced long literals to resolve borderline "SET A, n - future_label" cases
+- Pretty printed annotated assembler output with PC and machine code
 
 TODO list:
-- command-line options
-- compile-time constant expressions [symbol - 0x20 + I]
-- fix probable bitstream bug when short literal is forced long
-    (will only show up when (expr - symbol) form is supported)
-- free() symbols
-- maybe macros
-- support local symbols?
-- label redefinition semantics maybe unusual (latest wins)
+- Command-line options
+- Macros
+- Local symbols
+- Work on supporting llvm-dcpu16
+- Revisit label redefinition semantics (latest wins, maybe unusual)
+- Nicer warnings and errors

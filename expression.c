@@ -26,6 +26,8 @@ struct expr {
 	struct expr *right;
 };
 
+int alloc_count, free_count;
+
 /* internal unconditional (re)calculation */
 static int expr_value_calc(struct expr *e)
 {
@@ -50,7 +52,17 @@ static int expr_value_calc(struct expr *e)
 	case '-': return left - right;
 	case '+': return left + right;
 	case '*': return left * right;
-	case '/': return left / right;
+	case '/':
+		if (right == 0) {
+			printf("divide by zero error in expression (return 0)\n");
+			return 0;
+		} else {
+			return left / right;
+		}
+		break;
+	case '|': return left | right;
+	case '^': return left ^ right;
+	case '&': return left & right;
 	case LSHIFT: return left << right;
 	case RSHIFT: return left >> right;
 	default:
@@ -66,6 +78,7 @@ struct expr* gen_const(int val)
 {
 	//printf("gen_const: %d\n", val);
 	struct expr *e = calloc(sizeof *e, 1);
+	DBG_MEM("alloc %d: %p\n", ++alloc_count, e);
 	e->type = EXPR_CONSTANT;
 	e->maychange = 0;
 	e->value = val;
@@ -76,6 +89,7 @@ struct expr* gen_symbol(char *str)
 {
 	//printf("gen_symbol: %s\n", str);
 	struct expr *e = calloc(sizeof *e, 1);
+	DBG_MEM("alloc %d: %p\n", ++alloc_count, e);
 	e->type = EXPR_SYMBOL;
 	e->maychange = 1;
 	e->value = 0;
@@ -92,6 +106,7 @@ struct expr* expr_op(int op, struct expr* left, struct expr* right)
 		assert(left);
 
 	e = calloc(sizeof *e, 1);
+	DBG_MEM("alloc %d: %p\n", ++alloc_count, e);
 	e->type = EXPR_OPERATOR;
 	e->op = op;
 	e->left = left;
@@ -155,10 +170,15 @@ int expr_print_asm(char *buf, struct expr *e)
 	switch (e->op) {
 	case UMINUS: n += sprintf(buf + n, "-"); break;
 	case '~':    n += sprintf(buf + n, "~"); break;
-	case '+':    n += sprintf(buf + n, " + "); break;
-	case '-':    n += sprintf(buf + n, " - "); break;
-	case '*':    n += sprintf(buf + n, " * "); break;
-	case '/':    n += sprintf(buf + n, " / "); break;
+	case '+':
+	case '-':
+	case '*':
+	case '/':
+	case '&':
+	case '^':
+	case '|':
+		n += sprintf(buf + n, " %c ", (char)e->op);
+		break;
 	case LSHIFT: n += sprintf(buf + n, " << "); break;
 	case RSHIFT: n += sprintf(buf + n, " >> "); break;
 	/* default nothing, parens */
@@ -174,10 +194,19 @@ int expr_print_asm(char *buf, struct expr *e)
 
 void free_expr(struct expr *e)
 {
-	if (e->right)
-		free(e->right);
-	if (e->left)
-		free(e->left);
+	if (e->right) {
+		DBG_MEM("free right: %p\n", e->right);
+		free_expr(e->right);
+	} else {
+		DBG_MEM("nothing on right\n");
+	}
+	if (e->left) {
+		DBG_MEM("free left: %p\n", e->left);
+		free_expr(e->left);
+	} else {
+		DBG_MEM("nothing on left\n");
+	}
 	free(e);
+	DBG_MEM("free %d: %p\n", ++free_count, e);
 	/* symbols freed separately */
 }
