@@ -132,8 +132,8 @@ void operand_genbits(struct operand *o)
 			words = 2;
 		} else if (o->known_word_count == 1) {
 			/* small literal */
-			ERR_ON(exprval > 0x1f);
-			o->firstbits = 0x20 | (u16)exprval;
+			ERR_ON(exprval > 0x1e || exprval < -1);
+			o->firstbits = 0x20 | (u16)(exprval + 1);
 		} else {
 			/* next word literal */
 			o->firstbits = 0x1f;

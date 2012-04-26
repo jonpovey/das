@@ -11,6 +11,7 @@ This project includes GPLv2 parts from the Linux kernel, so I suppose I'll
 release it GPLv2.
 
 Features:
+- Spec 1.5 compliant (hopefuly)
 - Case-insensitive regarding opcodes and register names
 - Compile-time constant expressions supporting most C arithmetic and bitwise
   operators, and parentheses e.g.
