@@ -40,7 +40,7 @@ struct operand* gen_operand(int reg, struct expr *expr, int indirect)
 }
 
 /* generate an instruction from an opcode and one or two values */
-void gen_instruction(int opcode, struct operand *a, struct operand *b)
+void gen_instruction(int opcode, struct operand *b, struct operand *a)
 {
 	struct instr* i = malloc(sizeof *i);
 	i->opcode = opcode;
@@ -229,20 +229,30 @@ int instruction_get_binary(u16 *dest, void *private)
 
 	assert(i->a);
 	operand_genbits(i->a);
-	if (i->b)
+	DBG("opcode:%x", i->opcode);
+	DBG(" a:%x", operand_firstbits(i->a));
+	if (i->b) {
 		operand_genbits(i->b);
+		DBG(" b:%x", operand_firstbits(i->b));
+	}
 
-	if (i->opcode == 0) {
-		/* special case JSR */
-		word |= 1 << 4;
+	if (i->opcode & SPECIAL_OPCODE) {
+		/* special */
+		DBG(" special");
+		word |= (i->opcode & 0x1f) << 5;
+		DBG(" w/op:%x ", word);
 		word |= operand_firstbits(i->a) << 10;
 	} else {
 		assert(i->b);
-		assert(i->opcode > 0 && i->opcode < 16);
+		DBG(" normal");
 		word |= i->opcode;
-		word |= operand_firstbits(i->a) << 4;
-		word |= operand_firstbits(i->b) << 10;
+		DBG(" w/op:%04x", word);
+		word |= operand_firstbits(i->a) << 10;
+		DBG(" w/a:%x", word);
+		/* b may not be short literal form */
+		word |= operand_firstbits(i->b) << 5;
 	}
+	DBG("\n");
 	dest[nwords++] = word;
 	if (operand_needs_nextword(i->a)) {
 		dest[nwords++] = operand_nextbits(i->a);
@@ -277,11 +287,11 @@ static int instruction_print_asm(char *buf, void *private)
 	struct instr *i = private;
 
 	count = sprintf(buf, "%s ", opcode2str(i->opcode));
-	count += operand_print_asm(buf + count, i->a);
 	if (i->b) {
-		count += sprintf(buf + count, ", ");
 		count += operand_print_asm(buf + count, i->b);
+		count += sprintf(buf + count, ", ");
 	}
+	count += operand_print_asm(buf + count, i->a);
 	return count;
 }
 

@@ -10,7 +10,17 @@
 
 #include "dasdefs.h"
 
-static char *opcodes[] = {
+/*
+ * macro magic. use GCC designated initialisers to build a sparse array
+ * of strings indexed by opcode. special opcodes are offset by 0x20
+ */
+#define OP(val, op, count) [val] = #op
+#define SOP(val, op, count) [val | 0x20] = #op
+static char *opcodes[64] = { OPCODES SPECIAL_OPCODES };
+#undef OP
+#undef SOP
+
+#if 0
 	"JSR",	/* special case */
 	"SET",
 	"ADD",
@@ -28,6 +38,7 @@ static char *opcodes[] = {
 	"IFG",
 	"IFB",
 };
+#endif
 
 static struct reg registers[] = {
 	{ "a",    0 },
@@ -53,7 +64,7 @@ int arrsearch(char *str, char **arr, int arrsize)
 	int i;
 
 	for (i = 0; i < arrsize; i++) {
-		if (0 == strcasecmp(str, arr[i]))
+		if (arr[i] && 0 == strcasecmp(str, arr[i]))
 			return i;
 	}
 	fprintf(stderr, "BUG '%s' not found!\n", str);
@@ -68,7 +79,7 @@ int str2opcode(char *str)
 
 char* opcode2str(int op)
 {
-	if (op >= 0 && op < ARRAY_SIZE(opcodes))
+	if (op >= 0 && op < ARRAY_SIZE(opcodes) && opcodes[op])
 		return opcodes[op];
 	else
 		return "INVALID";

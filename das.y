@@ -68,7 +68,7 @@ statement:
 
 instr:
 	OP2 operand ',' operand		{ gen_instruction($1, $2, $4); }
-	| OP1 operand				{ gen_instruction($1, $2, NULL); }
+	| OP1 operand				{ gen_instruction($1, NULL, $2); }
 	| error						{ parse_error("bad instruction "); }
 	;
 

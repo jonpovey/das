@@ -22,9 +22,10 @@ symbolchar	{letter}|[\.$_]
 symbol		{symbolchar}({symbolchar}|{digit})*
 gpreg		[ABCXYZIJabcxyzij]
 xreg		SP|PC|O|POP|PEEK|PUSH|sp|pc|o|pop|peek|push
-op2		SET|ADD|SUB|MUL|DIV|MOD|SH[LR]|AND|[BX]OR|IF[ENGB]
-op2_lc		set|add|sub|mul|div|mod|sh[lr]|and|[bx]or|if[engb]
-op1		JSR|jsr
+op2		SET|ADD|SUB|MUL|MLI|DIV|DVI|MOD|MDI|AND|[BX]OR|SH[LR]|ASR|IF[BCENGALU]|ADX|SBX|ST[ID]
+op2_lc		set|add|sub|mul|mli|div|dvi|mod|mdi|and|[bx]or|sh[lr]|asr|if[bcengalu]|adx|sbx|st[id]
+op1		JSR|HCF|INT|IA[GSPQ]|HW[NQI]
+op1_lc		jsr|hcf|int|ia[gspq]|hw[nqi]
 
 %%
 
@@ -39,7 +40,7 @@ op1		JSR|jsr
 {gpreg}		{ yylval.integer = str2reg(yytext); return GPREG; }
 {xreg}		{ yylval.integer = str2reg(yytext); return XREG; }
 {op2}|{op2_lc}	{ yylval.integer = str2opcode(yytext); return OP2; }
-{op1}		{ yylval.integer = str2opcode(yytext); return OP1; }
+{op1}|{op1_lc}	{ yylval.integer = str2opcode(yytext); return OP1; }
 DAT|dat		{ return DAT; }
 {symbol}	{ yylval.string = yytext; return SYMBOL; }
 \"(\\.|[^\\"])*\" { yylval.string = yytext; return STRING; }

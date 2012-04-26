@@ -11,7 +11,7 @@ struct instr;
 
 /* Parse */
 struct operand* gen_operand(int reg, struct expr*, int indirect);
-void gen_instruction(int opcode, struct operand *a, struct operand *b);
+void gen_instruction(int opcode, struct operand *b, struct operand *a);
 
 /* Analysis */
 
