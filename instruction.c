@@ -22,6 +22,9 @@ struct instr {
 	int length_known;		/* 0 if unknown (maybe depends on symbols) */
 };
 
+#define MAX_SHORT_LITERAL	0x1e
+#define MIN_SHORT_LITERAL	-1
+
 /*
  * Parse phase support
  */
@@ -57,7 +60,7 @@ void gen_instruction(int opcode, struct operand *b, struct operand *a)
 /* (calculate and) get the word count needed to represent a value */
 int operand_word_count(struct operand *o)
 {
-	int words;
+	int words, value;
 	int maychange = 0;
 
 	/* already calculated, and is a fixed size? */
@@ -69,9 +72,10 @@ int operand_word_count(struct operand *o)
 			/* all indirect forms use next-word */
 			words = 2;
 		} else {
-			/* literal, is it small? */
-			if (expr_value(o->expr) < 0x20) {
-				/* small.. at least for now */
+			/* literal, is it short? */
+			value = expr_value(o->expr);
+			if (value <= MAX_SHORT_LITERAL && value >= MIN_SHORT_LITERAL) {
+				/* short.. at least for now */
 				words = 1;
 				maychange = expr_maychange(o->expr);
 			} else {
@@ -132,8 +136,8 @@ void operand_genbits(struct operand *o)
 			words = 2;
 		} else if (o->known_word_count == 1) {
 			/* small literal */
-			ERR_ON(exprval > 0x1e || exprval < -1);
-			o->firstbits = 0x20 | (u16)(exprval + 1);
+			ERR_ON(exprval > MAX_SHORT_LITERAL || exprval < MIN_SHORT_LITERAL);
+			o->firstbits = 0x20 | (u16)(exprval - MIN_SHORT_LITERAL);
 		} else {
 			/* next word literal */
 			o->firstbits = 0x1f;
