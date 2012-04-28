@@ -39,12 +39,13 @@ STD b, a
 
 JSR a
 
-HCF a
+HCF a	; undocumented since spec 1.7, but still exists
 INT a
 IAG a
 IAS a
-IAP a
-     
+;IAP a	; no more IAP, became RFI
+RFI a	; a is ignored
+
 IAQ a
      
 

@@ -68,12 +68,12 @@ int sprint_cstring(char *buf, const unsigned char *str, int bytes);
 
 #define SPECIAL_OPCODES \
 	SOP(0x01, JSR, 3), \
-	SOP(0x07, HCF, 9), \
+	SOP(0x07, HCF, 9), /* undocumented since spec 1.7 */ \
 	SOP(0x08, INT, 4), \
 	SOP(0x09, IAG, 1), \
 	SOP(0x0a, IAS, 1), \
-	SOP(0x0b, IAP, 3), \
-	SOP(0x0c, IAQ, 2), /* :) */ \
+	SOP(0x0b, RFI, 3), /* hooray! */ \
+	SOP(0x0c, IAQ, 2), /* hooray! */ \
 	SOP(0x10, HWN, 2), \
 	SOP(0x11, HWQ, 4), \
 	SOP(0x12, HWI, 4),

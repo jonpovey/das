@@ -24,8 +24,8 @@ gpreg		[ABCXYZIJabcxyzij]
 xreg		SP|PC|O|POP|PEEK|PUSH|sp|pc|o|pop|peek|push
 op2		SET|ADD|SUB|MUL|MLI|DIV|DVI|MOD|MDI|AND|[BX]OR|SH[LR]|ASR|IF[BCENGALU]|ADX|SBX|ST[ID]
 op2_lc		set|add|sub|mul|mli|div|dvi|mod|mdi|and|[bx]or|sh[lr]|asr|if[bcengalu]|adx|sbx|st[id]
-op1		JSR|HCF|INT|IA[GSPQ]|HW[NQI]
-op1_lc		jsr|hcf|int|ia[gspq]|hw[nqi]
+op1		JSR|HCF|INT|RFI|IA[GSQ]|HW[NQI]
+op1_lc		jsr|hcf|int|rfi|ia[gsq]|hw[nqi]
 
 %%
 
