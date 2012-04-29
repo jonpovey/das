@@ -7,6 +7,7 @@
 #include "common.h"
 
 struct operand {
+	enum opstyle style;
 	int indirect;
 	int reg;
 	struct expr *expr;
@@ -30,15 +31,56 @@ struct instr {
  */
 static struct statement_ops instruction_statement_ops;
 
-/* generate an operand from reg (maybe -1), expr (maybe null), indirect flag */
-struct operand* gen_operand(int reg, struct expr *expr, int indirect)
+/* do some parse-time validation checks on an operand */
+void operand_validate(struct operand *o)
 {
-	//printf("gen_operand(reg:%d expr:%p %sdirect)\n", reg, expr, indirect ? "in":"");
+	/*
+	 * general-purpose and special regs are combined now by the parser,
+	 * check for shennanigans like [PC + 3] or bare X + 1
+	 */
+	if (o->style == OPSTYLE_PLUS && ! o->indirect) {
+		error("Register + constant illegal outside [brackets]");
+	}
+	if (o->indirect && o->reg) {
+		/* only general-purpose registers and SP allowed (solo or + const) */
+		if (is_gpreg(o->reg) || o->reg == REG_SP) {
+			// OK
+		} else {
+			error("Can't use %s inside [brackets]", reg2str(o->reg));
+		}
+	}
+
+	// check PICK style is paired up with PICK register
+	if (o->style == OPSTYLE_PICK && o->reg != REG_PICK) {
+		error("'Register value' form only permitted for PICK");
+	}
+	if (o->reg == REG_PICK && o->style != OPSTYLE_PICK) {
+		if (o->style == OPSTYLE_SOLO) {
+			error("PICK without offset");
+		} else if (o->style == OPSTYLE_PLUS) {
+			/* could warn and allow this? */
+			error("Register PICK cannot be combined with '+'");
+		} else {
+			BUG();
+		}
+	}
+}
+
+/* generate an operand from reg (maybe -1), expr (maybe null), style (type) */
+struct operand* gen_operand(int reg, struct expr *expr, enum opstyle style)
+{
+	DBG("reg:%d expr:%p style:%i\n", reg, expr, style);
 	struct operand *o = calloc(1, sizeof *o);
-	o->indirect = indirect;
+	o->style = style;
 	o->reg = reg;
 	o->expr = expr;
 	o->known_word_count = 0;
+	return o;
+}
+
+struct operand* operand_set_indirect(struct operand *o)
+{
+	o->indirect = 1;
 	return o;
 }
 
@@ -49,7 +91,27 @@ void gen_instruction(int opcode, struct operand *b, struct operand *a)
 	i->opcode = opcode;
 	i->a = a;
 	i->b = b;
-	//printf("add instruction %p to list\n", i);
+	/* do validation at some later stage? */
+	if (a) {
+		operand_validate(a);
+		if (a->reg == REG_PUSH) {
+			error("PUSH not allowed in source ('a') operand");
+		}
+	}
+	if (b) {
+		operand_validate(b);
+		if (b->reg == REG_POP) {
+			error("POP not allowed in destination ('b') operand");
+		}
+		if (b->expr && !b->reg && !b->indirect) {
+			/*
+			 * literal destination will be ignored, warn. Maybe has valid use
+			 * for arithmetic, EX things?
+			 */
+			warn("Literal value used as destination");
+		}
+	}
+	//DBG("add instruction %p to list\n", i);
 	add_statement(i, &instruction_statement_ops);
 }
 
@@ -127,7 +189,7 @@ void operand_genbits(struct operand *o)
 
 	if (o->firstbits & 0x10) {			// magic numbers ahoy!
 		/* x-reg, bits set already */
-		ERR_ON(o->expr);
+		BUG_ON(o->expr);
 	} else if (o->reg < 0) {
 		/* no reg. have a expr. */
 		if (o->indirect) {
@@ -136,7 +198,7 @@ void operand_genbits(struct operand *o)
 			words = 2;
 		} else if (o->known_word_count == 1) {
 			/* small literal */
-			ERR_ON(exprval > MAX_SHORT_LITERAL || exprval < MIN_SHORT_LITERAL);
+			BUG_ON(exprval > MAX_SHORT_LITERAL || exprval < MIN_SHORT_LITERAL);
 			o->firstbits = 0x20 | (u16)(exprval - MIN_SHORT_LITERAL);
 		} else {
 			/* next word literal */
@@ -158,7 +220,7 @@ void operand_genbits(struct operand *o)
 		/* else plain gpreg, nothing to modify */
 	}
 
-	ERR_ON(words != o->known_word_count); // if true, assembler bug
+	BUG_ON(words != o->known_word_count); // if true, assembler bug
 
 	if (words == 2)
 		o->nextbits = (u16)exprval;

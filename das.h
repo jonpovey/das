@@ -15,4 +15,14 @@ extern struct options {
 	int notch_style;
 } options;
 
+/* fixme: better errors and warnings, with line numbers and such */
+#define error(fmt, args...) do { \
+	fprintf(stderr, "error: " fmt "\n", ##args); \
+	das_error = 1; \
+} while (0)
+
+#define warn(fmt, args...) do { \
+	fprintf(stderr, "warning: " fmt "\n", ##args); \
+} while (0)
+
 #endif // DAS_H

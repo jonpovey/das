@@ -20,44 +20,15 @@ static char *opcodes[64] = { OPCODES SPECIAL_OPCODES };
 #undef OP
 #undef SOP
 
-#if 0
-	"JSR",	/* special case */
-	"SET",
-	"ADD",
-	"SUB",
-	"MUL",
-	"DIV",
-	"MOD",
-	"SHL",
-	"SHR",
-	"AND",
-	"BOR",
-	"XOR",
-	"IFE",
-	"IFN",
-	"IFG",
-	"IFB",
-};
-#endif
-
-static struct reg registers[] = {
-	{ "a",    0 },
-	{ "b",    1 },
-	{ "c",    2 },
-	{ "x",    3 },
-	{ "y",    4 },
-	{ "z",    5 },
-	{ "i",    6 },
-	{ "j",    7 },
-	{ "POP",  0x18 },
-	{ "PEEK", 0x19 },
-	{ "PUSH", 0x1a },
-	{ "SP",   0x1b },
-	{ "PC",   0x1c },
-	{ "O",    0x1d },
-};
-
-//static char *xregs[] = { "POP", "PEEK", "PUSH", "SP", "PC", "O" };
+/*
+ * more macro magic. make a static array of struct reg which we can use for
+ * looking up registers by string, and index into it to get associated data
+ * such as binary value, general-purpose flag for validation, and string for
+ * prettyprinting
+ */
+#define REGISTER(value, name, gp) { value, #name, gp }
+static struct reg registers[] = { REGISTERS };
+#undef REGISTER
 
 int arrsearch(char *str, char **arr, int arrsize)
 {
@@ -69,6 +40,12 @@ int arrsearch(char *str, char **arr, int arrsize)
 	}
 	fprintf(stderr, "BUG '%s' not found!\n", str);
 	return -1;
+}
+
+inline int valid_reg(int reg)
+{
+	/* reg 0 is not valid, it means "no register" */
+	return reg > 0 && reg < ARRAY_SIZE(registers);
 }
 
 /* get op value for an opcode string */
@@ -99,7 +76,7 @@ int str2reg(char *str)
 
 char* reg2str(int reg)
 {
-	if (reg >= 0 && reg < ARRAY_SIZE(registers)) {
+	if (valid_reg(reg)) {
 		return registers[reg].name;
 	} else {
 		return NULL;
@@ -108,8 +85,14 @@ char* reg2str(int reg)
 
 u16 reg2bits(int reg)
 {
-	assert(reg >= 0 && reg < ARRAY_SIZE(registers));
+	assert(valid_reg(reg));
 	return registers[reg].valbits;
+}
+
+int is_gpreg(int reg)
+{
+	assert(valid_reg(reg));
+	return registers[reg].is_gp;
 }
 
 inline int isoctal(int c) { return c >= '0' && c <= '7'; }

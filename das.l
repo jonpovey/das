@@ -21,41 +21,40 @@ hexdigit	[0-9a-fA-F]
 symbolchar	{letter}|[\.$_]
 symbol		{symbolchar}({symbolchar}|{digit})*
 gpreg		[ABCXYZIJabcxyzij]
-xreg		SP|PC|O|POP|PEEK|PUSH|sp|pc|o|pop|peek|push
-op2		SET|ADD|SUB|MUL|MLI|DIV|DVI|MOD|MDI|AND|[BX]OR|SH[LR]|ASR|IF[BCENGALU]|ADX|SBX|ST[ID]
+xreg		SP|PC|EX|POP|PEEK|PUSH|PICK|sp|pc|ex|pop|peek|push|pick
+op2			SET|ADD|SUB|MUL|MLI|DIV|DVI|MOD|MDI|AND|[BX]OR|SH[LR]|ASR|IF[BCENGALU]|ADX|SBX|ST[ID]
 op2_lc		set|add|sub|mul|mli|div|dvi|mod|mdi|and|[bx]or|sh[lr]|asr|if[bcengalu]|adx|sbx|st[id]
-op1		JSR|HCF|INT|RFI|IA[GSQ]|HW[NQI]
+op1			JSR|HCF|INT|RFI|IA[GSQ]|HW[NQI]
 op1_lc		jsr|hcf|int|rfi|ia[gsq]|hw[nqi]
 
 %%
 
-:{symbol}	{ yylval.string = yytext + 1; return LABEL; }
-{symbol}:	{
-			yylval.string = yytext;
-			yytext[strlen(yytext) - 1] = 0;
-			return LABEL;
-		}
-0x{hexdigit}+	return get_constant();
-{digit}+	return get_constant();
-{gpreg}		{ yylval.integer = str2reg(yytext); return GPREG; }
-{xreg}		{ yylval.integer = str2reg(yytext); return XREG; }
-{op2}|{op2_lc}	{ yylval.integer = str2opcode(yytext); return OP2; }
-{op1}|{op1_lc}	{ yylval.integer = str2opcode(yytext); return OP1; }
-DAT|dat		{ return DAT; }
-{symbol}	{ yylval.string = yytext; return SYMBOL; }
-\"(\\.|[^\\"])*\" { yylval.string = yytext; return STRING; }
-\<\<		return LSHIFT;
-\>\>		return RSHIFT;
+:{symbol}			{ yylval.string = yytext + 1; return LABEL; }
+{symbol}:			{
+						yylval.string = yytext;
+						yytext[strlen(yytext) - 1] = 0;
+						return LABEL;
+					}
+0x{hexdigit}+		return get_constant();
+{digit}+			return get_constant();
+{gpreg}|{xreg}		{ yylval.integer = str2reg(yytext); return REG; }
+{op2}|{op2_lc}		{ yylval.integer = str2opcode(yytext); return OP2; }
+{op1}|{op1_lc}		{ yylval.integer = str2opcode(yytext); return OP1; }
+DAT|dat				{ return DAT; }
+{symbol}			{ yylval.string = yytext; return SYMBOL; }
+\"(\\.|[^\\"])*\"	{ yylval.string = yytext; return STRING; }
+\<\<				return LSHIFT;
+\>\>				return RSHIFT;
 
 [-,+*/|&^()~\[\]\n]	return *yytext;
 
-[ \t]+		;	/* ignore whitespace */
-;.*		;	/* comment */
+[ \t]+		;		/* ignore whitespace */
+;.*			;		/* comment */
 
-		/* Magic to fix input with missing \n on last line */
-<<EOF>> 	{ static int once = 0; return once++ ? 0 : '\n'; }
+					/* Magic to fix input with missing \n on last line */
+<<EOF>> 			{ static int once = 0; return once++ ? 0 : '\n'; }
 
-.		yyerror("Invalid character ");
+.					yyerror("Invalid character ");
 
 %%
 

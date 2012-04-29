@@ -8,8 +8,9 @@
 typedef unsigned short u16;
 
 struct reg {
-	char *name;
 	u16  valbits;
+	char *name;
+	int is_gp;		/* general-purpose register [ABCXYZIJ] */
 };
 
 int str2opcode(char *str);
@@ -18,19 +19,12 @@ char* opcode2str(int op);
 int str2reg(char *str);
 char* reg2str(int reg);
 u16 reg2bits(int reg);
+int is_gpreg(int reg);
 
 void yyerror(char *);
 
 int unescape_c_string(const char *src, unsigned char *dest);
 int sprint_cstring(char *buf, const unsigned char *str, int bytes);
-
-#define ERR_ON(x) ({ int r = !!(x); \
-	if (r) { \
-		fprintf(stderr, "%s:%d ERR_ON(%s)\n", __FILE__, __LINE__, #x); \
-		das_error = 1; \
-	} \
-	r; \
-})
 
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
@@ -79,5 +73,34 @@ int sprint_cstring(char *buf, const unsigned char *str, int bytes);
 	SOP(0x12, HWI, 4),
 
 #define SPECIAL_OPCODE 0x20
+
+/*
+ * registers that can appear in values
+ * REGISTER(binary (base) value, name, gp_flag)
+ * gp_flag means general-purpose register: can use [reg] and [reg + nextword]
+ * forms by adding 0x8 / 0x10
+ */
+#define REGISTERS \
+	REGISTER(0xff, NONE, 0), /* reserve zero to mean no register */ \
+	REGISTER(0,    A,    1), \
+	REGISTER(1,    B,    1), \
+	REGISTER(2,    C,    1), \
+	REGISTER(3,    X,    1), \
+	REGISTER(4,    Y,    1), \
+	REGISTER(5,    Z,    1), \
+	REGISTER(6,    I,    1), \
+	REGISTER(7,    J,    1), \
+	REGISTER(0x18, PUSH, 0), \
+	REGISTER(0x18, POP,  0), /* note PUSH, POP have same opcode */ \
+	REGISTER(0x19, PEEK, 0), \
+	REGISTER(0x1a, PICK, 0), \
+	REGISTER(0x1b, SP,   0), \
+	REGISTER(0x1c, PC,   0), \
+	REGISTER(0x1d, EX,   0),
+
+/* declare lookup enum of registers, will index into array */
+#define REGISTER(val, name, gp) REG_##name
+enum regs { REGISTERS };
+#undef REGISTER
 
 #endif

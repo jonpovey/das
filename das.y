@@ -24,15 +24,13 @@ void parse_error(char *str);
 
 %token <string> SYMBOL LABEL STRING
 %token <integer> CONSTANT
-%token <integer> GPREG
-%token <integer> XREG
+%token <integer> REG
 %token <integer> OP1 OP2 DAT
 %token <integer> OPERATOR
 %token <integer> LSHIFT RSHIFT
 
 %type <expr> expr
-%type <operand> operand
-%type <integer> gpreg
+%type <operand> operand op_expr
 %type <dat_elem> dat_elem datlist
 
 %left '|'
@@ -73,18 +71,17 @@ instr:
 	;
 
 operand:
-	XREG						{ $$ = gen_operand($1, NULL, 0); }
-	| gpreg						{ $$ = gen_operand($1, NULL, 0); }
-	| expr						{ $$ = gen_operand(-1, $1, 0); }
-	| '[' gpreg ']'				{ $$ = gen_operand($2, NULL, 1); }
-	| '[' expr ']'				{ $$ = gen_operand(-1, $2, 1); }
-	| '[' expr '+' gpreg ']'	{ $$ = gen_operand($4, $2, 1); }
-	| '[' gpreg '+' expr ']'	{ $$ = gen_operand($2, $4, 1); }
-	| error						{ parse_error("bad value "); }
+	op_expr
+	| '[' op_expr ']'			{ $$ = operand_set_indirect($2); }
 	;
 
-gpreg:
-	GPREG						{ $$ = $1; }
+op_expr:
+	REG							{ $$ = gen_operand($1, NULL, OPSTYLE_SOLO); }
+	| expr						{ $$ = gen_operand(-1, $1, OPSTYLE_SOLO); }
+	| REG expr  /* PICK n */	{ $$ = gen_operand($1, $2, OPSTYLE_PICK); }
+	| expr '+' REG				{ $$ = gen_operand($3, $1, OPSTYLE_PLUS); }
+	| REG '+' expr				{ $$ = gen_operand($1, $3, OPSTYLE_PLUS); }
+ /*	| error						{ parse_error("bad op_expr"); } */
 	;
 
 expr:

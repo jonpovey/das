@@ -1,55 +1,73 @@
-; test new/all opcodes
-SET b, a
-ADD b, a
-        
-SUB b, a
-        
-MUL b, a
-        
-MLI b, a
-DIV b, a
-        
-DVI b, a
-MOD b, a
-MDI b, a
-AND b, a
-BOR b, a
-XOR b, a
-SHR b, a
-        
-ASR b, a
-        
-SHL b, a
+; test new/All opcodes
 
-IFB b, a
-IFC b, a
-IFE b, a
-IFN b, a
-IFG b, a
-IFA b, a
-IFL b, a
-IFU b, a
-   
-ADX b, a
-        
-SBX b, a
+	SET B, POP
+	;SET B, [SP++]	; later
+	SET PUSH, A
+	;SET [--SP], A	; later
 
-STI b, a
-STD b, a
+	SET POP, A		; error (POP only goes in a)
+	SET B, PUSH		; error (POP only goes in b)
 
-JSR a
+:foo
+	SET B, PEEK
+	SET PEEK, A
+	SET PICK 1, A
+	SET B, PICK foo + 3
+	;SET [SP + 3], A				; later
+	;:label1 SET [label1 + SP], A	; also later
 
-HCF a	; undocumented since spec 1.7, but still exists
-INT a
-IAG a
-IAS a
-;IAP a	; no more IAP, became RFI
-RFI a	; a is ignored
+	SET B, A
+	ADD B, A
+			
+	SUB B, A
+			
+	MUL B, A
+			
+	MLI B, A
+	DIV B, A
+			
+	DVI B, A
+	MOD B, A
+	MDI B, A
+	AND B, A
+	BOR B, A
+	XOR B, A
+	SHR B, A
+			
+	ASR B, A
+			
+	SHL B, A
 
-IAQ a
-     
+	IFB B, A
+	IFC B, A
+	IFE B, A
+	IFN B, A
+	IFG B, A
+	IFA B, A
+	IFL B, A
+	IFU B, A
+	   
+	ADX B, A
+			
+	SBX B, A
 
-HWN a
-HWQ a
-     
-HWI a
+	STI B, A
+	STD B, A
+
+	JSR A
+
+	HCF A		; undocumented since spec 1.7, but still exists
+	INT A
+	IAG A
+	IAS A
+	;IAP A		; no more IAP, became RFI
+	RFI A		; A is ignored
+	;RFI		; no-arg shorthand, later
+
+	IAQ A
+		 
+
+	HWN A
+	HWQ A
+		 
+	HWI A

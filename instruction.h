@@ -9,9 +9,16 @@
 struct operand;
 struct instr;
 
+enum opstyle {
+	OPSTYLE_SOLO,
+	OPSTYLE_PICK,
+	OPSTYLE_PLUS,
+};
+
 /* Parse */
-struct operand* gen_operand(int reg, struct expr*, int indirect);
+struct operand* gen_operand(int reg, struct expr*, enum opstyle style);
 void gen_instruction(int opcode, struct operand *b, struct operand *a);
+struct operand* operand_set_indirect(struct operand *);
 
 /* Analysis */
 

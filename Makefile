@@ -5,6 +5,7 @@ HDRS := dasdefs.h das.h list.h instruction.h symbol.h expression.h common.h \
 		statement.h dat.h output.h
 DEPS := $(SRCS) $(HDRS) Makefile
 
+CC := gcc
 CFLAGS := -g -Wall
 
 # TODO: partial compliation, auto dependencies
@@ -13,7 +14,7 @@ CFLAGS := -g -Wall
 #MAKEFLAGS += --no-builtin-rules
 
 $(PROG): $(DEPS)
-	gcc $(CFLAGS) -o $@ $(SRCS)
+	$(CC) $(CFLAGS) -o $@ $(SRCS)
 
 y.tab.h y.tab.c: $(PROG).y Makefile $(HDRS)
 	yacc -d $<
