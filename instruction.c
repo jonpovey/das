@@ -69,7 +69,7 @@ void operand_validate(struct operand *o)
 /* generate an operand from reg (maybe -1), expr (maybe null), style (type) */
 struct operand* gen_operand(int reg, struct expr *expr, enum opstyle style)
 {
-	DBG("reg:%d expr:%p style:%i\n", reg, expr, style);
+	TRACE1("reg:%d expr:%p style:%i\n", reg, expr, style);
 	struct operand *o = calloc(1, sizeof *o);
 	o->style = style;
 	o->reg = reg;
@@ -87,7 +87,7 @@ struct operand* operand_set_indirect(struct operand *o)
 /* generate an instruction from an opcode and one or two values */
 void gen_instruction(int opcode, struct operand *b, struct operand *a)
 {
-	struct instr* i = malloc(sizeof *i);
+	struct instr* i = calloc(1, sizeof *i);
 	i->opcode = opcode;
 	i->a = a;
 	i->b = b;
@@ -182,7 +182,8 @@ void operand_genbits(struct operand *o)
 	if (o->expr)
 		exprval = expr_value(o->expr);
 
-	if (o->reg != -1)
+	/* FIXME binary generation is BROKEN since reg rework */
+	if (o->reg)
 		o->firstbits = reg2bits(o->reg);
 	else
 		o->firstbits = 0;
@@ -267,7 +268,7 @@ static int instruction_binary_size(void *private) {
 
 	/* shortcut if entirely static */
 	if (i->length_known > 0) {
-		//printf("shortcut: length known: %d\n", i->length_known);
+		TRACE2("shortcut: length known: %d\n", i->length_known);
 		return i->length_known;
 	}
 

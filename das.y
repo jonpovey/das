@@ -77,7 +77,7 @@ operand:
 
 op_expr:
 	REG							{ $$ = gen_operand($1, NULL, OPSTYLE_SOLO); }
-	| expr						{ $$ = gen_operand(-1, $1, OPSTYLE_SOLO); }
+	| expr						{ $$ = gen_operand(REG_NONE, $1, OPSTYLE_SOLO); }
 	| REG expr  /* PICK n */	{ $$ = gen_operand($1, $2, OPSTYLE_PICK); }
 	| expr '+' REG				{ $$ = gen_operand($3, $1, OPSTYLE_PLUS); }
 	| REG '+' expr				{ $$ = gen_operand($1, $3, OPSTYLE_PLUS); }

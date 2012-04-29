@@ -68,7 +68,7 @@ static int label_analyse(void *private, int pc)
 {
 	struct symbol *sym = private;
 	if (sym->value != pc) {
-		DBG("label %s changed: %d -> %d\n", sym->name, sym->value, pc);
+		TRACE1("label %s changed: %d -> %d\n", sym->name, sym->value, pc);
 		sym->value = pc;
 		return 1;
 	}

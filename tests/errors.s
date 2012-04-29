@@ -7,7 +7,7 @@ errors:
 
 	SET POP, 1			; POP is a-value (right) only
 	SET X, PUSH			; PUSH is b-value (left) only
-	SET X, O			; O(verflow) register doesn't exist any more
+	SET X, O			; O(verflow) register doesn't exist any more. maybe label?
 
 	SET X, Y + 1		; direct reg + const form is never OK
 	SET X, SP + 1		; not OK here either

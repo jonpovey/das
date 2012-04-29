@@ -99,12 +99,15 @@ int statements_analyse(void)
 				// eek
 				return ret;
 			} else {
+				TRACE2("PC %d + %d\n", pc, ret);
 				pc += ret;
 			}
+		} else {
+			TRACE2("Statement with no get_binary_size\n");
 		}
 	}
 	// should be trace or maybe warn/error if > 64k
-	printf("analysis end PC: 0x%x words\n", pc);
+	TRACE0("analysis end PC: 0x%x words\n", pc);
 	return labels_changed;
 }
 
