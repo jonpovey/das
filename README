@@ -11,7 +11,7 @@ This project includes GPLv2 parts from the Linux kernel, so I suppose I'll
 release it GPLv2.
 
 Features:
-- Spec 1.5 compliant (hopefuly)
+- Spec 1.7 compliant
 - Case-insensitive regarding opcodes and register names
 - Compile-time constant expressions supporting most C arithmetic and bitwise
   operators, and parentheses e.g.
@@ -19,14 +19,17 @@ Features:
 	DAT label + 2
 - Strings support C escape sequences e.g. "\x0f\t1f CHARACTERS\n\0"
 - Optimised small literals in the presence of symbols
-- Forced long literals to resolve borderline "SET A, n - future_label" cases
+- Forced long literals to resolve borderline cases involving labels
 - Pretty printed annotated assembler output with PC and machine code
 
 TODO list:
 - Command-line options
 - Macros
 - Local symbols
+- Rounding, warning on out-of-range constants
+- Interpret 0xffff as -1 for short literal
 - Work on supporting llvm-dcpu16
 - Revisit label redefinition semantics (latest wins, maybe unusual)
 - Nicer warnings and errors
+- Error on undefined symbol (instead of pretending it's zero)
 - Hint register EX if symbol 'O' is found but undefined

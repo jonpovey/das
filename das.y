@@ -65,8 +65,15 @@ statement:
 	;
 
 instr:
-	OP2 operand ',' operand		{ gen_instruction($1, $2, $4); }
-	| OP1 operand				{ gen_instruction($1, NULL, $2); }
+	OP2 operand ',' operand		{
+								operand_set_position($2, OP_POS_B);
+								operand_set_position($4, OP_POS_A);
+								gen_instruction($1, $2, $4);
+								}
+	| OP1 operand				{
+								operand_set_position($2, OP_POS_A);
+								gen_instruction($1, NULL, $2);
+								}
 	| error						{ parse_error("bad instruction "); }
 	;
 

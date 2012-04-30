@@ -5,9 +5,6 @@
 	SET PUSH, A
 	;SET [--SP], A	; later
 
-	SET POP, A		; error (POP only goes in a)
-	SET B, PUSH		; error (POP only goes in b)
-
 :foo
 	SET B, PEEK
 	SET PEEK, A

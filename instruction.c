@@ -8,6 +8,7 @@
 
 struct operand {
 	enum opstyle style;
+	enum op_pos position;
 	int indirect;
 	int reg;
 	struct expr *expr;
@@ -26,6 +27,9 @@ struct instr {
 #define MAX_SHORT_LITERAL	0x1e
 #define MIN_SHORT_LITERAL	-1
 
+#define BINGEN_DBG(fmt, args...) (void)0
+#define BINGEN_DBG_FUNC(fmt, args...) (void)0
+
 /*
  * Parse phase support
  */
@@ -34,6 +38,9 @@ static struct statement_ops instruction_statement_ops;
 /* do some parse-time validation checks on an operand */
 void operand_validate(struct operand *o)
 {
+	DBG_FUNC("pos:%s style:%d indirect:%d reg:%d(%s) expr:%p\n",
+		o->position == OP_POS_A ? "a" : "b",
+		o->style, o->indirect, o->reg, reg2str(o->reg), o->expr);
 	/*
 	 * general-purpose and special regs are combined now by the parser,
 	 * check for shennanigans like [PC + 3] or bare X + 1
@@ -64,6 +71,27 @@ void operand_validate(struct operand *o)
 			BUG();
 		}
 	}
+
+	/* validate a/b specifics */
+	if (o->position == OP_POS_A) {
+		if (o->reg == REG_PUSH) {
+			error("PUSH not usable as source ('a') operand");
+		}
+	} else if (o->position == OP_POS_B) {
+		if (o->reg == REG_POP) {
+			error("POP not usable as destination ('b') operand");
+		}
+		if (o->expr && !o->reg && !o->indirect) {
+			/*
+			 * literal destination will be ignored, warn. Maybe has valid use
+			 * for arithmetic, EX things?
+			 */
+			warn("Literal value used as destination");
+		}
+	} else {
+		BUG();
+	}
+
 }
 
 /* generate an operand from reg (maybe -1), expr (maybe null), style (type) */
@@ -80,7 +108,21 @@ struct operand* gen_operand(int reg, struct expr *expr, enum opstyle style)
 
 struct operand* operand_set_indirect(struct operand *o)
 {
+	assert(o);
+	BUG_ON(o->indirect);
 	o->indirect = 1;
+	return o;
+}
+
+/*
+ * need to know if operand is in a or b position for PUSH/POP validation,
+ * b literal warnings, and b short literal disable.
+ */
+struct operand* operand_set_position(struct operand *o, enum op_pos pos)
+{
+	assert(pos == OP_POS_A || pos == OP_POS_B);
+	BUG_ON(o->position != 0);
+	o->position = pos;
 	return o;
 }
 
@@ -94,22 +136,9 @@ void gen_instruction(int opcode, struct operand *b, struct operand *a)
 	/* do validation at some later stage? */
 	if (a) {
 		operand_validate(a);
-		if (a->reg == REG_PUSH) {
-			error("PUSH not allowed in source ('a') operand");
-		}
 	}
 	if (b) {
 		operand_validate(b);
-		if (b->reg == REG_POP) {
-			error("POP not allowed in destination ('b') operand");
-		}
-		if (b->expr && !b->reg && !b->indirect) {
-			/*
-			 * literal destination will be ignored, warn. Maybe has valid use
-			 * for arithmetic, EX things?
-			 */
-			warn("Literal value used as destination");
-		}
 	}
 	//DBG("add instruction %p to list\n", i);
 	add_statement(i, &instruction_statement_ops);
@@ -130,8 +159,8 @@ int operand_word_count(struct operand *o)
 		return o->known_word_count;
 
 	if (o->expr) {
-		if (o->indirect) {
-			/* all indirect forms use next-word */
+		if (o->indirect || o->reg == REG_PICK || o->position == OP_POS_B) {
+			/* all indirect forms use next-word, and b can't be short literal */
 			words = 2;
 		} else {
 			/* literal, is it short? */
@@ -179,19 +208,23 @@ void operand_genbits(struct operand *o)
 		o->known_word_count = operand_word_count(o);
 	}
 
+	// FIXME warn and truncate oversize values somewhere
 	if (o->expr)
 		exprval = expr_value(o->expr);
 
-	/* FIXME binary generation is BROKEN since reg rework */
 	if (o->reg)
 		o->firstbits = reg2bits(o->reg);
 	else
 		o->firstbits = 0;
 
-	if (o->firstbits & 0x10) {			// magic numbers ahoy!
-		/* x-reg, bits set already */
-		BUG_ON(o->expr);
-	} else if (o->reg < 0) {
+	if (o->reg && !is_gpreg(o->reg)) {
+		/* x-reg, firstbits are good */
+		if (o->reg == REG_PICK) {
+			/* PICK needs nextword */
+			assert(o->expr);
+			words = 2;
+		}
+	} else if (!o->reg) {
 		/* no reg. have a expr. */
 		if (o->indirect) {
 			/* [next word] form */
@@ -199,6 +232,7 @@ void operand_genbits(struct operand *o)
 			words = 2;
 		} else if (o->known_word_count == 1) {
 			/* small literal */
+			BUG_ON(o->position == OP_POS_B);
 			BUG_ON(exprval > MAX_SHORT_LITERAL || exprval < MIN_SHORT_LITERAL);
 			o->firstbits = 0x20 | (u16)(exprval - MIN_SHORT_LITERAL);
 		} else {
@@ -296,30 +330,29 @@ int instruction_get_binary(u16 *dest, void *private)
 
 	assert(i->a);
 	operand_genbits(i->a);
-	DBG("opcode:%x", i->opcode);
-	DBG(" a:%x", operand_firstbits(i->a));
+	BINGEN_DBG_FUNC("opcode:%x", i->opcode);
+	BINGEN_DBG(" a:%x", operand_firstbits(i->a));
 	if (i->b) {
 		operand_genbits(i->b);
-		DBG(" b:%x", operand_firstbits(i->b));
+		BINGEN_DBG(" b:%x", operand_firstbits(i->b));
 	}
 
-	if (i->opcode & SPECIAL_OPCODE) {
-		/* special */
-		DBG(" special");
-		word |= (i->opcode & 0x1f) << 5;
-		DBG(" w/op:%x ", word);
+	if (is_special(i->opcode)) {
+		BINGEN_DBG(" special");
+		word |= opcode2bits(i->opcode) << 5;
+		BINGEN_DBG(" w/op:%x ", word);
 		word |= operand_firstbits(i->a) << 10;
 	} else {
 		assert(i->b);
-		DBG(" normal");
-		word |= i->opcode;
-		DBG(" w/op:%04x", word);
+		BINGEN_DBG(" normal");
+		word |= opcode2bits(i->opcode);
+		BINGEN_DBG(" w/op:%04x", word);
 		word |= operand_firstbits(i->a) << 10;
-		DBG(" w/a:%x", word);
+		BINGEN_DBG(" w/a:%x", word);
 		/* b may not be short literal form */
 		word |= operand_firstbits(i->b) << 5;
 	}
-	DBG("\n");
+	BINGEN_DBG("\n");
 	dest[nwords++] = word;
 	if (operand_needs_nextword(i->a)) {
 		dest[nwords++] = operand_nextbits(i->a);
@@ -335,16 +368,24 @@ int operand_print_asm(char *buf, struct operand *o)
 	int count = 0;
 
 	assert(o);
-	if (o->indirect)
-		count += sprintf(buf + count, "[");
-	if (o->expr)
+	if (o->style == OPSTYLE_PICK) {
+		assert(o->reg == REG_PICK);
+		assert(o->expr);
+		/* can't be indirect */
+		count += sprintf(buf + count, "%s ", reg2str(o->reg));
 		count += expr_print_asm(buf + count, o->expr);
-	if (o->expr && o->reg != -1)
-		count += sprintf(buf + count, " + ");
-	if (o->reg != -1)
-		count += sprintf(buf + count, "%s", reg2str(o->reg));
-	if (o->indirect)
-		count += sprintf(buf + count, "]");
+	} else {
+		if (o->indirect)
+			count += sprintf(buf + count, "[");
+		if (o->expr)
+			count += expr_print_asm(buf + count, o->expr);
+		if (o->expr && o->reg)
+			count += sprintf(buf + count, " + ");
+		if (o->reg)
+			count += sprintf(buf + count, "%s", reg2str(o->reg));
+		if (o->indirect)
+			count += sprintf(buf + count, "]");
+	}
 	return count;
 }
 

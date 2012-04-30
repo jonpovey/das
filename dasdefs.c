@@ -8,14 +8,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "dasdefs.h"
+#include "common.h"
 
 /*
  * macro magic. use GCC designated initialisers to build a sparse array
  * of strings indexed by opcode. special opcodes are offset by 0x20
  */
 #define OP(val, op, count) [val] = #op
-#define SOP(val, op, count) [val | 0x20] = #op
+#define SOP(val, op, count) [val | SPECIAL_OPCODE] = #op
 static char *opcodes[64] = { OPCODES SPECIAL_OPCODES };
 #undef OP
 #undef SOP
@@ -48,6 +48,11 @@ inline int valid_reg(int reg)
 	return reg > 0 && reg < ARRAY_SIZE(registers);
 }
 
+inline int valid_opcode(int op)
+{
+	return op >= 0 && op < ARRAY_SIZE(opcodes) && opcodes[op];
+}
+
 /* get op value for an opcode string */
 int str2opcode(char *str)
 {
@@ -56,10 +61,26 @@ int str2opcode(char *str)
 
 char* opcode2str(int op)
 {
-	if (op >= 0 && op < ARRAY_SIZE(opcodes) && opcodes[op])
-		return opcodes[op];
-	else
-		return "INVALID";
+	assert(valid_opcode(op));
+	return opcodes[op];
+}
+
+u16 opcode2bits(int opcode)
+{
+	assert(valid_opcode(opcode));
+	if (is_special(opcode)) {
+		/* will need << 5 to make into valid machine code */
+		return opcode & ~SPECIAL_OPCODE;
+	} else {
+		return opcode;
+	}
+}
+
+int is_special(int opcode)
+{
+	if (BUG_ON(!valid_opcode(opcode)))
+		return -1;
+	return opcode & SPECIAL_OPCODE;
 }
 
 int str2reg(char *str)

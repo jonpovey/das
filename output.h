@@ -1,8 +1,6 @@
 #ifndef OUTPUT_H
 #define OUTPUT_H
 
-#define DEBUG
-
 /* wrap fprintf as print() so extra things may be added if wanted */
 #define print(to, fmt, args...) fprintf(to, fmt, ##args)
 
@@ -24,10 +22,15 @@
   #define DBG(fmt, args...) (void)0
 #endif
 
+#define DBG_FUNC(fmt, args...) DBG("%s: " fmt, __func__, ##args)
+
 #define DBG_MEM(fmt, args...) (void)0
 
 #define TRACE0(fmt, args...) (void)0
-#define TRACE1(fmt, args...) (void)0
+
+//#define TRACE1(fmt, args...) (void)0
+#define TRACE1(fmt, args...) DBG(fmt, ##args)
+
 #define TRACE2(fmt, args...) (void)0
 
 #endif

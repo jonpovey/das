@@ -15,6 +15,8 @@ struct reg {
 
 int str2opcode(char *str);
 char* opcode2str(int op);
+u16 opcode2bits(int opcode);
+int is_special(int opcode);
 
 int str2reg(char *str);
 char* reg2str(int reg);

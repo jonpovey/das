@@ -14,6 +14,8 @@ DEPS := $(SRCS) $(HDRS) Makefile
 
 CFLAGS := -g -Wall
 
+#CFLAGS += -DDEBUG
+
 # TODO: partial compliation, auto dependencies
 
 .SUFFIXES:

@@ -186,8 +186,8 @@ void fprint_bin_chunk(FILE *f, u16 *binbuf, int binwords, int start_col,
  */
 int statements_fprint_asm(FILE *f)
 {
-	char linebuf[1024];		/* should be big enough... */
-	u16  binbuf[512];		/* ditto */
+	char linebuf[102400];		/* should be big enough... */
+	u16  binbuf[65536];			/* ditto */
 	int lines = 0, col = 0;
 	int pc = 0;
 	int asm_main_col = options.asm_main_col;
