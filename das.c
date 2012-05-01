@@ -3,7 +3,6 @@
  * Copyright 2012 Jon Povey <jon@leetfighter.com>
  * Released under the GPL v2
  */
-#include <arpa/inet.h>
 #include <assert.h>
 #include <getopt.h>
 #include <stdio.h>
@@ -133,7 +132,8 @@ void handle_args(int argc, char **argv)
 void reverse_words(u16 *bin, int nwords)
 {
 	while (nwords--) {
-		*bin = htons(*bin);
+		/* mingw32 doesn't seem to have htons() so do it myself */
+		*bin = *bin >> 8 | *bin << 8;
 		bin++;
 	}
 }		
