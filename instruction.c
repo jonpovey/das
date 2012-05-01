@@ -4,6 +4,10 @@
  * Copyright 2012 Jon Povey <jon@leetfighter.com>
  * Released under the GPL v2
  */
+#ifndef DEBUG_INSTRUCTION
+  #undef DEBUG
+#endif
+
 #include "common.h"
 
 struct operand {

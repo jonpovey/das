@@ -4,6 +4,10 @@
  * Copyright 2012 Jon Povey <jon@leetfighter.com>
  * Released under the GPL v2
  */
+
+#define VERSION "0.9"
+#define VERSTRING "BlueDAS DCPU-16 Assembler, version " VERSION
+
 extern int das_error;
 
 extern struct options {
@@ -13,6 +17,7 @@ extern struct options {
 	int asm_hex_col;
 	int asm_max_cols;
 	int notch_style;
+	int verbose;
 } options;
 
 /* fixme: better errors and warnings, with line numbers and such */
