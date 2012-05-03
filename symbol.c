@@ -12,6 +12,13 @@ enum sym_flags {
 	SYM_DEF   = 0x4,	/* explicitly defined (not label) .. ?*/
 };
 
+struct symbol {
+	char *name;
+	int  flags;
+	int  value;
+	struct list_head list;		/* on all_symbols list */
+};
+
 static LIST_HEAD(all_symbols);
 static const struct statement_ops label_statement_ops;
 
@@ -73,6 +80,11 @@ static int label_analyse(void *private, int pc)
 		return 1;
 	}
 	return 0;
+}
+
+int symbol_value(struct symbol *sym)
+{
+	return sym->value;
 }
 
 /*

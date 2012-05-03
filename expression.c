@@ -35,7 +35,7 @@ static int expr_value_calc(struct expr *e)
 
 	assert(e);
 	if (e->type == EXPR_SYMBOL) {
-		return e->symbol->value;
+		return symbol_value(e->symbol);
 	} else if (e->type == EXPR_CONSTANT) {
 		return e->value;
 	}

@@ -18,6 +18,7 @@ void label_parse(char *name);
 /* Analysis */
 struct symbol* first_defined_symbol(void);
 struct symbol* next_defined_symbol(struct symbol *symbol);
+int symbol_value(struct symbol *sym);
 
 /* Output */
 void dump_symbol(struct symbol *l);
@@ -26,13 +27,5 @@ int symbol_print_asm(char *buf, struct symbol *sym);
 
 /* Cleanup */
 void symbols_free(void);
-
-/* Things that should not be exposed, hack hack */
-struct symbol {
-	char *name;
-	int  flags;
-	int  value;
-	struct list_head list;		/* on all_symbols list */
-};
 
 #endif
