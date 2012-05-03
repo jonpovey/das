@@ -39,6 +39,21 @@ struct instr {
  */
 static struct statement_ops instruction_statement_ops;
 
+/*
+ * mask a constant value into *bits for writing.
+ * return 0 if value fit in range, -1 or 1 if it wrapped round
+ */
+int mask_constant(int value, s16 *bits)
+{
+	*bits = (s16)value;
+	if (value < -0x8000)
+		return -1;
+	else if (value > 0xffff)
+		return 1;
+	else
+		return 0;
+}
+
 /* do some parse-time validation checks on an operand */
 void operand_validate(struct operand *o)
 {
@@ -167,9 +182,16 @@ int operand_word_count(struct operand *o)
 			/* all indirect forms use next-word, and b can't be short literal */
 			words = 2;
 		} else {
-			/* literal, is it short? */
+			s16 valbits;
+			/*
+			 * literal, is it short?
+			 * need to mask value to check, e.g. 0x1ffff would mask (with
+			 * a warning) to 0xffff and therefore be -1, short form
+			 */
 			value = expr_value(o->expr);
-			if (value <= MAX_SHORT_LITERAL && value >= MIN_SHORT_LITERAL) {
+			mask_constant(value, &valbits);
+			DBG_FUNC("value:%d bits:%d\n", value, valbits);
+			if (valbits <= MAX_SHORT_LITERAL && valbits >= MIN_SHORT_LITERAL) {
 				/* short.. at least for now */
 				words = 1;
 				maychange = expr_maychange(o->expr);
@@ -204,7 +226,9 @@ int operand_needs_nextword(struct operand *o)
 void operand_genbits(struct operand *o)
 {
 	int exprval;
+	s16 valword;
 	int words = 1;	/* correctness check */
+	int ret;
 
 	// FIXME test this actually works
 	if (0 == o->known_word_count) {
@@ -212,9 +236,14 @@ void operand_genbits(struct operand *o)
 		o->known_word_count = operand_word_count(o);
 	}
 
-	// FIXME warn and truncate oversize values somewhere
-	if (o->expr)
+	if (o->expr) {
 		exprval = expr_value(o->expr);
+		ret = mask_constant(exprval, &valword);
+		if (ret) {
+			warn("Value %d(0x%x) does not fit in 16 bits, masked to 0x%x",
+				exprval, exprval, valword);
+		}
+	}
 
 	if (o->reg)
 		o->firstbits = reg2bits(o->reg);
@@ -237,8 +266,9 @@ void operand_genbits(struct operand *o)
 		} else if (o->known_word_count == 1) {
 			/* small literal */
 			BUG_ON(o->position == OP_POS_B);
-			BUG_ON(exprval > MAX_SHORT_LITERAL || exprval < MIN_SHORT_LITERAL);
-			o->firstbits = 0x20 | (u16)(exprval - MIN_SHORT_LITERAL);
+			BUG_ON(valword > MAX_SHORT_LITERAL);
+			BUG_ON(valword < MIN_SHORT_LITERAL);
+			o->firstbits = 0x20 | (valword - MIN_SHORT_LITERAL);
 		} else {
 			/* next word literal */
 			o->firstbits = 0x1f;
@@ -262,7 +292,7 @@ void operand_genbits(struct operand *o)
 	BUG_ON(words != o->known_word_count); // if true, assembler bug
 
 	if (words == 2)
-		o->nextbits = (u16)exprval;
+		o->nextbits = valword;
 }
 
 u16 operand_firstbits(struct operand *o)

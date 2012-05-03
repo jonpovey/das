@@ -153,7 +153,6 @@ int expr_print_asm(char *buf, struct expr *e)
 	if (e->type == EXPR_SYMBOL) {
 		return symbol_print_asm(buf, e->symbol);
 	} else if (e->type == EXPR_CONSTANT) {
-		/* warn or something if truncating to 16-bit? */
 		if (e->value < 0xf) {
 			/* print small numbers as decimal without 0x */
 			return sprintf(buf, "%d", e->value);

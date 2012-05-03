@@ -18,6 +18,7 @@ extern struct options {
 	int asm_max_cols;
 	int notch_style;
 	int verbose;
+	int big_endian;
 } options;
 
 /* fixme: better errors and warnings, with line numbers and such */

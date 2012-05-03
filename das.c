@@ -4,6 +4,7 @@
  * Released under the GPL v2
  */
 #include <assert.h>
+#include <errno.h>
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,6 +16,7 @@ int yyparse(void);
 extern FILE *yyin;
 
 int das_error = 0;
+int stdout_inuse = 0;
 char *binpath;
 char *asmpath;
 char *dumppath;
@@ -29,6 +31,7 @@ struct options options = {
 	.asm_max_cols = 80,
 	.notch_style  = 1,
 	.verbose = 0,
+	.big_endian = 1,
 };
 
 void print_usage(void)
@@ -38,10 +41,12 @@ void print_usage(void)
 	fprintf(stderr, "Usage: %s [OPTIONS] asmfile\n\n", dasname);
 	fprintf(stderr, "OPTIONS:\n");
 	fprintf(stderr, "  -o outfile         Write binary to outfile, default das-out.bin\n");
-	fprintf(stderr, "  -v, -verbose       Be more chatty (normally silent on success)\n");
-	fprintf(stderr, "  -d, -dump          Dump human-readable listing, default to das-dump.txt\n");
-	fprintf(stderr, "  -dumpto file       Specify the dump filename (implies -d)\n");
-	fprintf(stderr, "\nThe character '-' for asmfile or outfile means read/write to stdin/stdout.\n");
+	fprintf(stderr, "  -v, --verbose      Be more chatty (normally silent on success)\n");
+	fprintf(stderr, "  -d, --dump         Dump human-readable listing, default to das-dump.txt\n");
+	fprintf(stderr, "  --dumpto file      Specify the dump filename (implies -d)\n");
+	fprintf(stderr, "  --dump-no-pc       Omit PC column from dump; makes dump a valid source file\n");
+	fprintf(stderr, "  --le               Generate little-endian binary (default big-endian)\n");
+	fprintf(stderr, "\nThe character '-' for files means read/write to stdin/stdout instead.\n");
 }
 
 void suggest_help(void)
@@ -57,13 +62,15 @@ void handle_args(int argc, char **argv)
 		int option_index = 0;
 		static const char *short_options = "o:vhd";
 		static const struct option long_options[] = {
-			{"dumpfile",	required_argument,	0, 0},
+			{"dumpto",		required_argument,	0, 0},
+			{"le",			no_argument,		0, 0},
+			{"dump-no-pc",	no_argument,		0, 0},
 			{"dump",		no_argument,		0, 'd'},
 			{"verbose",		no_argument,		0, 'v'},
 			{},
 		};
 
-		int c = getopt_long_only(argc, argv, short_options,
+		int c = getopt_long(argc, argv, short_options,
 				long_options, &option_index);
 
 		DBG("c:%d\n", c);
@@ -78,7 +85,16 @@ void handle_args(int argc, char **argv)
 			case 0:
 				dump = 1;
 				dumppath = optarg;
-				DBG("dumppath:%s\n", dumppath);
+				if (!strcmp("-", dumppath)) {
+					stdout_inuse++;
+				}
+				break;
+			case 1:
+				options.big_endian = 0;
+				info("Big-endian binary mode selected\n");
+				break;
+			case 2:
+				options.asm_print_pc = 0;
 				break;
 			default:
 				BUG();
@@ -89,9 +105,12 @@ void handle_args(int argc, char **argv)
 			break;
 		case 'o':
 			binpath = optarg;
+			if (!strcmp("-", binpath))
+				stdout_inuse++;
 			break;
 		case 'v':
 			options.verbose = 1;
+			stdout_inuse++;
 			break;
 		case 'h':
 			print_usage();
@@ -103,8 +122,17 @@ void handle_args(int argc, char **argv)
 		}
 	}
 
+	if (stdout_inuse > 1) {
+		if (options.verbose)
+			error("Can't mix verbose mode and file output to STDOUT");
+		else
+			error("Only one output file can use STDOUT");
+		suggest_help();
+		exit(EXIT_FAILURE);
+	}
+
 	if (optind < argc - 1) {
-		error("Too many input files: Only one supported for now\n");
+		error("Too many input files: Only one supported for now");
 		DBG("optind:%d argc:%d\n", optind, argc);
 		suggest_help();
 		exit(EXIT_FAILURE);
@@ -136,11 +164,12 @@ void reverse_words(u16 *bin, int nwords)
 		*bin = *bin >> 8 | *bin << 8;
 		bin++;
 	}
-}		
+}
 
 int main(int argc, char **argv)
 {
 	int ret;
+	int exitval = 0;
 	u16 *binary = NULL;
 	FILE *binfile, *asmfile, *dumpfile = 0;
 
@@ -150,32 +179,38 @@ int main(int argc, char **argv)
 
 	if (!strcmp("-", asmpath)) {
 		asmfile = stdin;
+		info("Input: stdin\n");
 	} else {
 		asmfile = fopen(asmpath, "r");
+		info("Input file: %s\n", asmpath);
 	}
 	if (!asmfile) {
-		fprintf(stderr, "Opening %s failed: %m\n", asmpath);
+		error("Opening %s failed: %s", asmpath, strerror(errno));
 		exit(EXIT_FAILURE);
 	}
 
 	if (!strcmp("-", binpath)) {
-		if (options.verbose) {
-			error("Can't mix verbose output and binary to STDOUT");
-			exit(EXIT_FAILURE);
-		}
 		binfile = stdout;
+		/* info pointless - verbose mode incompatible */
 	} else {
 		binfile = fopen(binpath, "w");
+		info("Write binary to %s\n", binpath);
 	}
 	if (!binfile) {
-		fprintf(stderr, "Writing %s failed: %m\n", binpath);
+		error("Writing %s failed: %s\n", binpath, strerror(errno));
 		exit(EXIT_FAILURE);
 	}
 
 	if (dumppath) {
-		dumpfile = fopen(dumppath, "w");
+		if (!strcmp("-", dumppath)) {
+			dumpfile = stdout;
+			/* info pointless - verbose mode incompatible with stdout dump */
+		} else {
+			dumpfile = fopen(dumppath, "w");
+			info("Dumping to %s\n", dumppath);
+		}
 		if (!dumpfile) {
-			fprintf(stderr, "Dump to %s failed: %m\n", dumppath);
+			error("Dump to %s failed: %s\n", dumppath, strerror(errno));
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -205,7 +240,6 @@ int main(int argc, char **argv)
 		if (asmfile != stdin) {
 			fprintf(dumpfile, "; Source file: %s\n", asmpath);
 		}
-		/* dump asm to stdout for now. later, to file by option switch */
 		ret = statements_fprint_asm(dumpfile);
 		if (ret < 0) {
 			fprintf(stderr, "Dump error.\n");
@@ -223,15 +257,17 @@ int main(int argc, char **argv)
 		fprintf(stderr, "Binary generation error.\n");
 		return 1;
 	}
-	/*
-	 * returned value is word count. reverse words for big-endian storage
-	 * (seems to be the de-facto spec)
-	 */
-	reverse_words(binary, ret);
-	fwrite(binary, sizeof(u16), ret, binfile);
+	/* returned value is word count. reverse words for big-endian storage */
+	if (options.big_endian) {
+		reverse_words(binary, ret);
+	}
+	if (ret != fwrite(binary, sizeof(u16), ret, binfile)) {
+		fprintf(stderr, "Binary write error: %s\n", strerror(errno));
+		exitval = 1;
+	}
 	fclose(binfile);
 	free(binary);
 	statements_free();
 	symbols_free();
-	return 0;
+	return exitval;
 }

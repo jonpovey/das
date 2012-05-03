@@ -6,6 +6,7 @@
 #define DASDEFS_H
 
 typedef unsigned short u16;
+typedef   signed short s16;
 
 struct reg {
 	u16  valbits;

@@ -17,6 +17,12 @@
 	SET a, 0x20
 	SET a, 0x200
 
+; warning cases
+	SET a, -0x8000	; fits
+	SET a, -0x8001	; wrap to 0
+	SET a, 0xffff	; fits
+	SET a, 0x10000	; wrap to 0
+
 ; test short literal forced long
 			SET a, from + 32 - to	; may be short literal
 :from		SET a, from + 32 - to	; must be long literal
