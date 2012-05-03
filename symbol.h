@@ -6,14 +6,17 @@
  * Copyright 2012 Jon Povey <jon@leetfighter.com>
  * Released under the GPL v2
  */
-#include "instruction.h"
-#include "list.h"
 
 struct symbol;
+
+#include "expression.h"
+#include "instruction.h"
+#include "list.h"
 
 /* Parse */
 struct symbol* symbol_parse(char *name);
 void label_parse(char *name);
+void directive_equ(struct symbol *sym, struct expr *expr);
 
 /* Analysis */
 struct symbol* first_defined_symbol(void);

@@ -15,6 +15,9 @@
 int yyparse(void);
 extern FILE *yyin;
 
+#define HACK_ANALYSE_MAX		500
+static int hack_loop_breaker = 0;
+
 int das_error = 0;
 int stdout_inuse = 0;
 char *binpath;
@@ -227,8 +230,15 @@ int main(int argc, char **argv)
 		ret = statements_analyse();
 		if (ret >= 0) {
 			info("Analysis pass: %d labels changed\n", ret);
+			hack_loop_breaker++;
 		}
-	} while (ret > 0);
+	} while (ret > 0 && hack_loop_breaker < HACK_ANALYSE_MAX);
+
+	if (hack_loop_breaker == HACK_ANALYSE_MAX && ret != 0) {
+		fprintf(stderr, "Analysis still running after %d passes: "
+				"Circular .equ reference?\n", hack_loop_breaker);
+		return 1;
+	}
 
 	if (ret < 0) {
 		fprintf(stderr, "Analysis error.\n");

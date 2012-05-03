@@ -13,6 +13,7 @@ enum stmt_type {
 	STMT_INSTRUCTION,
 	STMT_LABEL,
 	STMT_DAT,
+	STMT_DIRECTIVE,
 };
 
 /* hide struct implementation detail inside statement.c. Modular! */

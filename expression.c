@@ -85,7 +85,7 @@ struct expr* gen_const(int val)
 	return e;
 }
 
-struct expr* gen_symbol(char *str)
+struct expr* gen_symbol_expr(struct symbol *sym)
 {
 	//printf("gen_symbol: %s\n", str);
 	struct expr *e = calloc(sizeof *e, 1);
@@ -93,7 +93,7 @@ struct expr* gen_symbol(char *str)
 	e->type = EXPR_SYMBOL;
 	e->maychange = 1;
 	e->value = 0;
-	e->symbol = symbol_parse(str);
+	e->symbol = sym;
 	return e;
 }
 

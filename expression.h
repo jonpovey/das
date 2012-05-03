@@ -8,11 +8,12 @@
  */
 
 struct expr;
-/* FIXME function names are fairly yuck */
+
+#include "symbol.h"
 
 /* Parse */
 struct expr* gen_const(int val);
-struct expr* gen_symbol(char *str);
+struct expr* gen_symbol_expr(struct symbol *sym);
 struct expr* expr_op(int op, struct expr* left, struct expr* right);
 
 /* Analyse */

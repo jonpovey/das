@@ -20,6 +20,7 @@ void parse_error(char *str);
 	struct expr *expr;
 	struct operand *operand;
 	struct dat_elem *dat_elem;
+	struct symbol *symbol;
 }
 
 %token <string> SYMBOL LABEL STRING
@@ -28,7 +29,9 @@ void parse_error(char *str);
 %token <integer> OP1 OP2 DAT
 %token <integer> OPERATOR
 %token <integer> LSHIFT RSHIFT
+%token <integer> EQU
 
+%type <symbol> symbol
 %type <expr> expr
 %type <operand> operand op_expr
 %type <dat_elem> dat_elem datlist
@@ -62,6 +65,7 @@ label:
 statement:
 	dat
 	| instr
+	| EQU symbol ',' expr		{ directive_equ($2, $4); }
 	;
 
 instr:
@@ -93,7 +97,7 @@ op_expr:
 
 expr:
 	CONSTANT					{ $$ = gen_const($1); }
-	| SYMBOL					{ $$ = gen_symbol($1); }
+	| symbol					{ $$ = gen_symbol_expr($1); }
 	| '-' expr %prec UMINUS 	{ $$ = expr_op(UMINUS, NULL, $2); }
 	| '~' expr %prec '~'		{ $$ = expr_op('~', NULL, $2); }
 	| expr '+' expr				{ $$ = expr_op('+', $1, $3); }
@@ -106,6 +110,10 @@ expr:
 	| expr LSHIFT expr			{ $$ = expr_op(LSHIFT, $1, $3); }
 	| expr RSHIFT expr			{ $$ = expr_op(RSHIFT, $1, $3); }
 	| '(' expr ')'				{ $$ = expr_op('(', NULL, $2); }
+	;
+
+symbol:
+	SYMBOL						{ $$ = symbol_parse($1); }
 	;
 
 dat:
