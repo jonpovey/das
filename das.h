@@ -5,7 +5,7 @@
  * Released under the GPL v2
  */
 
-#define VERSION "0.9"
+#define VERSION "0.10"
 #define VERSTRING "BlueDAS DCPU-16 Assembler, version " VERSION
 
 extern int das_error;
