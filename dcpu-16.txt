@@ -195,8 +195,8 @@ turning off interrupt queueing with IA set to 0 will be to immediately trigger
 and ignore all queued interrupts, emptying the queue before the next instruction
 is executed.
 
-IA is not set to 0 when an interrupt is triggered, the interrupt handler at IA
-will be called as described above. When that interrupt handler executes RFI
+If IA is not set to 0 when an interrupt is triggered, the interrupt handler at
+IA will be called as described above. When that interrupt handler executes RFI
 or IAQ 0, the interrupt queue will be checked and triggered as described above.
 This means that from the point of view of non-interrupt code, when interrupt
 queueing is disabled any interrupts are triggered in order and the queue will
