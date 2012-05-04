@@ -199,7 +199,7 @@ The value (a) is in the same six bit format as defined earlier.
  4 | 0x08 | INT a | Adds a software interrupt to the queue with message a
  1 | 0x09 | IAG a | sets a to IA 
  1 | 0x0a | IAS a | sets IA to a
- 3 | 0x0b | RFI a | sets TRIG to 1, pops A from the stack, then pops PC
+ 3 | 0x0b | RFI a | sets IH to 1, pops A from the stack, then pops PC
  2 | 0x0c | IHG a | sets a to IH
  2 | 0x0d | IHS a | sets IH to a
  - | 0x0e | -     |
