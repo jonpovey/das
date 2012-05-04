@@ -1,8 +1,68 @@
 DCPU-16 Specification
 Copyright 1985 Mojang
-Version 1.7 + suggested interrupt handling clarifications
+Version 1.7 + more extreme interrupt handling tweaks
 
+=== TWEAK COMMENTS =============================================================
+(This section to be removed)
 
+These mods were partly inspired by and discussed on this reddit thread:
+http://www.reddit.com/r/dcpu16/comments/t5wu5/
+
+The original purpose of these changes was only to clarify interrupt handling as
+regards INT, queueing and the "one interrupt per instruction" line. Then I got
+carried away and decided on a further rejig of terminology and IAQ.
+
+ - Change IAQ to IAH (Interrupt Hold). Because it is specified that multiple
+   interrupts arriving at the same time go onto a queue, it is confusing to
+   talk about "enabling and disabling queueing". Putting things on the queue is
+   always enabled, it's taking them off that we want to control.
+ - Specify a name, IH, for the register that IAH (ex IAQ) works on so that it's
+   clearer and more concise to talk about.
+ - Toy with having IAH return the previous value of IH into a.
+   If a is not a literal then this gives us a way to both test and nest
+   disabling of interrupts.
+ - Instead, rewrite IAH as IHG and IHS for simpler test and nest code.
+   Also parallels IAG/IAS, which is tidy.
+
+On choice of "Interrupt Hold":
+I considered "Interrupt Trigger" and "Interrupt Disable", but both have
+unfortunately confuseable flag acronyms (IT,ID). "Disable" would be closer
+to real-world terminology but more easily confused with setting IA=0 which
+also, in its own way, disables interrupts.
+
+On use of IHG, IHS:
+
+IHG can be used to get the current IH, to test if we are currently in
+interrupts-held context or to implement nesting.
+
+Having IHG, IHS implies that IH should be a 16-bit register. This means it
+can be used to store a nesting counter, and perhaps other wacky hacky uses.
+
+Example, nested disable. This creates a function which requires IH != 0 for
+some of its operation, and be called with IH at any value and restores that
+context:
+
+:func	;  (code before critical section)
+		IHG A
+		ADD A, 1         ; could test for overflow
+		IHS A            ; increment IH
+		;
+        ; do critical section which must be done with IH != 0
+		; we can call ourself or similar functions here
+		;
+		SUB A, 1
+        IHS A            ; restore IH for caller
+		;  (any code after critical section)
+        SET PC, POP
+
+Overflow of IH should be considered with this method (but the stack would
+most likely overflow first.)
+Instead of using IH as a counter, it could be stored on the stack.
+
+Testing IH is nice for generic routines which may want to behave differently
+depending on what context they are called in, for example putting some work on
+a queue (faster) if IH is set, or processing it inside the call (more efficient)
+if IH is clear.
 
 === SUMMARY ====================================================================
 
@@ -13,6 +73,7 @@ Version 1.7 + suggested interrupt handling clarifications
 * stack pointer (SP)
 * extra/excess (EX)
 * interrupt address (IA)
+* interrupt hold (IH)
 
 In this document, anything within [brackets] is shorthand for "the value of the
 RAM at the location of the value inside the brackets". For example, SP means
@@ -138,12 +199,9 @@ The value (a) is in the same six bit format as defined earlier.
  4 | 0x08 | INT a | Adds a software interrupt to the queue with message a
  1 | 0x09 | IAG a | sets a to IA 
  1 | 0x0a | IAS a | sets IA to a
- 3 | 0x0b | RFI a | disables interrupt queueing, pops A from the stack, then 
-   |      |       | pops PC from the stack
- 2 | 0x0c | IAQ a | if a is nonzero, interrupts will be kept on the queue
-   |      |       | instead of triggered. if a is zero, interrupts will be
-   |      |       | triggered as normal again
- - | 0x0d | -     |
+ 3 | 0x0b | RFI a | sets TRIG to 1, pops A from the stack, then pops PC
+ 2 | 0x0c | IHG a | sets a to IH
+ 2 | 0x0d | IHS a | sets IH to a
  - | 0x0e | -     |
  - | 0x0f | -     |
  2 | 0x10 | HWN a | sets a to number of connected hardware devices
@@ -175,37 +233,35 @@ As interrupts arrive at the DCPU-16, either from hardware or INT instruction,
 they are added to a queue. If the queue grows longer than 256 interrupts, the
 DCPU-16 will catch fire.
 
-When IA is set to something other than 0, interrupts called on the DCPU-16
-will turn on interrupt queueing, push PC to the stack, followed by pushing A to
-the stack, then set the PC to IA, and A to the interrupt message.
+Before the DCPU-16 executes every instruction, if IH is 0, the first interrupt
+in the queue will be triggered. Note that for hardware notification purposes, a
+queued interrupt is considered triggered when it leaves the queue, not when it
+enters it.
 
-Interrupt handlers should end with RFI, which will disable interrupt queueing
-and pop A and PC from the stack as a single atomic instruction.
-IAQ is normally not needed within an interrupt handler, but is useful for time
+When IA is set to something other than 0, interrupts triggered on the DCPU-16
+will set IH to 1, push PC to the stack, followed by pushing A to the stack, then
+set the PC to IA, and A to the interrupt message.
+
+Interrupt handlers should end with RFI, which will set IH to 0 and pop A and PC
+from the stack as a single atomic instruction.
+IHS is normally not needed within an interrupt handler, but is useful for time
 critical code and mutual exclusion.
-
-Before the DCPU-16 executes every instruction, if interrupt queueing is turned
-off, the first interrupt in the queue will be triggered. Note that for hardware
-notification purposes, a queued interrupt is considered triggered when it leaves
-the queue, not when it enters it.
 
 If IA is set to 0 when an interrupt is triggered, it does nothing. Before
 executing the next instruction the queue is checked again, so the effect of
-turning off interrupt queueing with IA set to 0 will be to immediately trigger
+setting IH to 0 with IA set to 0 will be to immediately trigger
 and ignore all queued interrupts, emptying the queue before the next instruction
 is executed.
 
-If IA is not set to 0 when an interrupt is triggered, the interrupt handler at
-IA will be called as described above. When that interrupt handler executes RFI
-or IAQ 0, the interrupt queue will be checked and triggered as described above.
-This means that from the point of view of non-interrupt code, when interrupt
-queueing is disabled any interrupts are triggered in order and the queue will
-be empty before the next instruction executes.
+When an interrupt handler executes RFI the interrupt queue will be checked and
+triggered as described above before the restored PC is executed.
+This means that all queued interrupts will be handled in order and the queue
+will be empty before control returns to the original PC.
 
-Note that calling INT with interrupt queueing enabled takes 4 cycles, but the
-interrupt will not be triggered until queueing is disabled. Calling INT with
-queuing disabled is probably what you want, so the interrupt triggers and any
-results are available by the next instruction.
+Note that calling INT with interrupts held takes 4 cycles, but the interrupt
+will not be triggered until IH is cleared. Calling INT when IH is zero is
+probably what you want, so the interrupt triggers and any results are available
+by the next instruction.
 
 === HARDWARE ===================================================================    
 
