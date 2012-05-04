@@ -1,6 +1,6 @@
 DCPU-16 Specification
 Copyright 1985 Mojang
-Version 1.7
+Version 1.7 + suggested interrupt handling clarifications
 
 
 
@@ -135,12 +135,12 @@ The value (a) is in the same six bit format as defined earlier.
  - | 0x05 | -     |
  - | 0x06 | -     |
  - | 0x07 | -     | 
- 4 | 0x08 | INT a | triggers a software interrupt with message a
+ 4 | 0x08 | INT a | Adds a software interrupt to the queue with message a
  1 | 0x09 | IAG a | sets a to IA 
  1 | 0x0a | IAS a | sets IA to a
  3 | 0x0b | RFI a | disables interrupt queueing, pops A from the stack, then 
    |      |       | pops PC from the stack
- 2 | 0x0c | IAQ a | if a is nonzero, interrupts will be added to the queue
+ 2 | 0x0c | IAQ a | if a is nonzero, interrupts will be kept on the queue
    |      |       | instead of triggered. if a is zero, interrupts will be
    |      |       | triggered as normal again
  - | 0x0d | -     |
@@ -171,26 +171,41 @@ The value (a) is in the same six bit format as defined earlier.
 
 === INTERRUPTS =================================================================    
 
-The DCPU-16 will perform at most one interrupt between each instruction. If
-multiple interrupts are triggered at the same time, they are added to a queue.
-If the queue grows longer than 256 interrupts, the DCPU-16 will catch fire. 
+As interrupts arrive at the DCPU-16, either from hardware or INT instruction,
+they are added to a queue. If the queue grows longer than 256 interrupts, the
+DCPU-16 will catch fire.
 
-When IA is set to something other than 0, interrupts triggered on the DCPU-16
+When IA is set to something other than 0, interrupts called on the DCPU-16
 will turn on interrupt queueing, push PC to the stack, followed by pushing A to
 the stack, then set the PC to IA, and A to the interrupt message.
- 
-If IA is set to 0, a triggered interrupt does nothing. Software interrupts still
-take up four clock cycles, but immediately return, incoming hardware interrupts
-are ignored. Note that a queued interrupt is considered triggered when it leaves
-the queue, not when it enters it.
 
 Interrupt handlers should end with RFI, which will disable interrupt queueing
 and pop A and PC from the stack as a single atomic instruction.
 IAQ is normally not needed within an interrupt handler, but is useful for time
-critical code.
+critical code and mutual exclusion.
 
+Before the DCPU-16 executes every instruction, if interrupt queueing is turned
+off, the first interrupt in the queue will be triggered. Note that for hardware
+notification purposes, a queued interrupt is considered triggered when it leaves
+the queue, not when it enters it.
 
+If IA is set to 0 when an interrupt is triggered, it does nothing. Before
+executing the next instruction the queue is checked again, so the effect of
+turning off interrupt queueing with IA set to 0 will be to immediately trigger
+and ignore all queued interrupts, emptying the queue before the next instruction
+is executed.
 
+IA is not set to 0 when an interrupt is triggered, the interrupt handler at IA
+will be called as described above. When that interrupt handler executes RFI
+or IAQ 0, the interrupt queue will be checked and triggered as described above.
+This means that from the point of view of non-interrupt code, when interrupt
+queueing is disabled any interrupts are triggered in order and the queue will
+be empty before the next instruction executes.
+
+Note that calling INT with interrupt queueing enabled takes 4 cycles, but the
+interrupt will not be triggered until queueing is disabled. Calling INT with
+queuing disabled is probably what you want, so the interrupt triggers and any
+results are available by the next instruction.
 
 === HARDWARE ===================================================================    
 
