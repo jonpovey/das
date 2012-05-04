@@ -45,9 +45,9 @@ void print_usage(void)
 	fprintf(stderr, "OPTIONS:\n");
 	fprintf(stderr, "  -o outfile         Write binary to outfile, default das-out.bin\n");
 	fprintf(stderr, "  -v, --verbose      Be more chatty (normally silent on success)\n");
-	fprintf(stderr, "  -d, --dump         Dump human-readable listing, default to das-dump.txt\n");
-	fprintf(stderr, "  --dumpto file      Specify the dump filename (implies -d)\n");
-	fprintf(stderr, "  --dump-no-pc       Omit PC column from dump; makes dump a valid source file\n");
+	fprintf(stderr, "  -d, --dump         Dump human-readable listing to stdout\n");
+	fprintf(stderr, "  --dumpfile file    Dump to file instead\n");
+	fprintf(stderr, "  --no-dump-pc       Omit PC column from dump; makes dump a valid source file\n");
 	fprintf(stderr, "  --le               Generate little-endian binary (default big-endian)\n");
 	fprintf(stderr, "\nThe character '-' for files means read/write to stdin/stdout instead.\n");
 }
@@ -65,9 +65,9 @@ void handle_args(int argc, char **argv)
 		int option_index = 0;
 		static const char *short_options = "o:vhd";
 		static const struct option long_options[] = {
-			{"dumpto",		required_argument,	0, 0},
+			{"dumpfile",	required_argument,	0, 0},
 			{"le",			no_argument,		0, 0},
-			{"dump-no-pc",	no_argument,		0, 0},
+			{"no-dump-pc",	no_argument,		0, 0},
 			{"dump",		no_argument,		0, 'd'},
 			{"verbose",		no_argument,		0, 'v'},
 			{},
@@ -88,9 +88,6 @@ void handle_args(int argc, char **argv)
 			case 0:
 				dump = 1;
 				dumppath = optarg;
-				if (!strcmp("-", dumppath)) {
-					stdout_inuse++;
-				}
 				break;
 			case 1:
 				options.big_endian = 0;
@@ -125,6 +122,11 @@ void handle_args(int argc, char **argv)
 		}
 	}
 
+	if (dump && (!dumppath || !strcmp("-", dumppath))) {
+		stdout_inuse++;
+		dumppath = "-";		/* for later test, if using -d */
+	}
+
 	if (stdout_inuse > 1) {
 		if (options.verbose)
 			error("Can't mix verbose mode and file output to STDOUT");
@@ -154,10 +156,6 @@ void handle_args(int argc, char **argv)
 		binpath = "das-out.bin";
 	}
 
-	if (dump && !dumppath) {
-		DBG("Guess dump path\n");
-		dumppath = "das-dump.txt";
-	}
 }
 
 void reverse_words(u16 *bin, int nwords)
