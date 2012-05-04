@@ -42,17 +42,18 @@ Example, nested disable. This creates a function which requires IH != 0 for
 some of its operation, and be called with IH at any value and restores that
 context:
 
-:func	;  (code before critical section)
-		IHG A
-		ADD A, 1         ; could test for overflow
-		IHS A            ; increment IH
-		;
+:func
+        ;  (code before critical section)
+        IHG A
+        ADD A, 1         ; could test for overflow
+        IHS A            ; increment IH
+        ;
         ; do critical section which must be done with IH != 0
-		; we can call ourself or similar functions here
-		;
-		SUB A, 1
+        ; we can call ourself or similar functions here
+        ;
+        SUB A, 1
         IHS A            ; restore IH for caller
-		;  (any code after critical section)
+        ;  (any code after critical section)
         SET PC, POP
 
 Overflow of IH should be considered with this method (but the stack would
