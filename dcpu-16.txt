@@ -173,35 +173,22 @@ As interrupts arrive at the DCPU-16, either from hardware or INT instruction,
 they are added to a queue. If the queue grows longer than 256 interrupts, the
 DCPU-16 will catch fire.
 
-Before the DCPU-16 executes every instruction, if IH is 0, the first interrupt
-in the queue will be triggered. Note that for hardware notification purposes, a
-queued interrupt is considered triggered when it leaves the queue, not when it
-enters it.
-
-When IA is set to something other than 0, interrupts triggered on the DCPU-16
-will set IH to 1, push PC to the stack, followed by pushing A to the stack, then
-set the PC to IA, and A to the interrupt message.
+After the DCPU-16 executes any instruction, if IH is 0, IA is checked. If it
+is zero, the interrupt queue is immediately cleared, ignoring any interrupts.
+If IA is set to something other than 0, the first interrupt in the queue is
+dequeued and triggered; the DCPU-16 will set IH to 1, push PC to the stack,
+followed by pushing A to the stack, then set the PC to IA, and A to the
+interrupt message.
 
 Interrupt handlers should end with RFI, which will set IH to 0 and pop A and PC
 from the stack as a single atomic instruction.
 IHS is normally not needed within an interrupt handler, but is useful for time
 critical code and mutual exclusion.
 
-If IA is set to 0 when an interrupt is triggered, it does nothing. Before
-executing the next instruction the queue is checked again, so the effect of
-setting IH to 0 with IA set to 0 will be to immediately trigger
-and ignore all queued interrupts, emptying the queue before the next instruction
-is executed.
-
-When an interrupt handler executes RFI the interrupt queue will be checked and
-triggered as described above before the restored PC is executed.
-This means that all queued interrupts will be handled in order and the queue
-will be empty before control returns to the original PC.
-
-Note that calling INT with interrupts held takes 4 cycles, but the interrupt
-will not be triggered until IH is cleared. Calling INT when IH is zero is
-probably what you want, so the interrupt triggers and any results are available
-by the next instruction.
+Note that calling INT when IH is not 0 still takes 4 cycles, but the interrupt
+will not be triggered until IH gets set to 0. Calling INT when IH is 0 is
+probably what you want, so the interrupt gets handled before the instruction
+that follows.
 
 === HARDWARE ===================================================================    
 
