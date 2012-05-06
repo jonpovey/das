@@ -1,6 +1,6 @@
 DCPU-16 Specification
 Copyright 1985 Mojang
-Version 1.7 + more extreme interrupt handling tweaks
+Version 1.7 + "Bonus Round" interrupt handling tweaks
 
 
 
