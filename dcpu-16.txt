@@ -2,68 +2,7 @@ DCPU-16 Specification
 Copyright 1985 Mojang
 Version 1.7 + more extreme interrupt handling tweaks
 
-=== TWEAK COMMENTS =============================================================
-(This section to be removed)
 
-These mods were partly inspired by and discussed on this reddit thread:
-http://www.reddit.com/r/dcpu16/comments/t5wu5/
-
-The original purpose of these changes was only to clarify interrupt handling as
-regards INT, queueing and the "one interrupt per instruction" line. Then I got
-carried away and decided on a further rejig of terminology and IAQ.
-
- - Change IAQ to IAH (Interrupt Hold). Because it is specified that multiple
-   interrupts arriving at the same time go onto a queue, it is confusing to
-   talk about "enabling and disabling queueing". Putting things on the queue is
-   always enabled, it's taking them off that we want to control.
- - Specify a name, IH, for the register that IAH (ex IAQ) works on so that it's
-   clearer and more concise to talk about.
- - Toy with having IAH return the previous value of IH into a.
-   If a is not a literal then this gives us a way to both test and nest
-   disabling of interrupts.
- - Instead, rewrite IAH as IHG and IHS for simpler test and nest code.
-   Also parallels IAG/IAS, which is tidy.
-
-On choice of "Interrupt Hold":
-I considered "Interrupt Trigger" and "Interrupt Disable", but both have
-unfortunately confuseable flag acronyms (IT,ID). "Disable" would be closer
-to real-world terminology but more easily confused with setting IA=0 which
-also, in its own way, disables interrupts.
-
-On use of IHG, IHS:
-
-IHG can be used to get the current IH, to test if we are currently in
-interrupts-held context or to implement nesting.
-
-Having IHG, IHS implies that IH should be a 16-bit register. This means it
-can be used to store a nesting counter, and perhaps other wacky hacky uses.
-
-Example, nested disable. This creates a function which requires IH != 0 for
-some of its operation, and be called with IH at any value and restores that
-context:
-
-:func
-        ;  (code before critical section)
-        IHG A
-        ADD A, 1         ; could test for overflow
-        IHS A            ; increment IH
-        ;
-        ; do critical section which must be done with IH != 0
-        ; we can call ourself or similar functions here
-        ;
-        SUB A, 1
-        IHS A            ; restore IH for caller
-        ;  (any code after critical section)
-        SET PC, POP
-
-Overflow of IH should be considered with this method (but the stack would
-most likely overflow first.)
-Instead of using IH as a counter, it could be stored on the stack.
-
-Testing IH is nice for generic routines which may want to behave differently
-depending on what context they are called in, for example putting some work on
-a queue (faster) if IH is set, or processing it inside the call (more efficient)
-if IH is clear.
 
 === SUMMARY ====================================================================
 
