@@ -136,10 +136,10 @@ The value (a) is in the same six bit format as defined earlier.
  - | 0x05 | -     |
  - | 0x06 | -     |
  - | 0x07 | -     | 
- 4 | 0x08 | INT a | Adds a software interrupt to the queue with message a
+ 4 | 0x08 | INT a | adds a software interrupt to the queue with message a
  1 | 0x09 | IAG a | sets a to IA 
  1 | 0x0a | IAS a | sets IA to a
- 3 | 0x0b | RFI a | Atomically sets IH to 0, pops A from the stack, then pops PC
+ 3 | 0x0b | RFI a | atomically sets IH to 0, pops A from the stack, then pops PC
  2 | 0x0c | IHG a | sets a to IH
  2 | 0x0d | IHS a | sets IH to a
  - | 0x0e | -     |
@@ -189,6 +189,9 @@ Note that calling INT when IH is not 0 still takes 4 cycles, but the interrupt
 will not be triggered until IH gets set to 0. Calling INT when IH is 0 is
 probably what you want, so the interrupt gets handled before the instruction
 that follows.
+
+
+
 
 === HARDWARE ===================================================================    
 
