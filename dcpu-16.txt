@@ -173,12 +173,12 @@ As interrupts arrive at the DCPU-16, either from hardware or INT instruction,
 they are added to a queue. If the queue grows longer than 256 interrupts, the
 DCPU-16 will catch fire.
 
-After the DCPU-16 executes any instruction, if IH is 0, IA is checked. If it
-is zero, the interrupt queue is immediately cleared, ignoring any interrupts.
-If IA is set to something other than 0, the first interrupt in the queue is
-dequeued and triggered; the DCPU-16 will set IH to 1, push PC to the stack,
-followed by pushing A to the stack, then set the PC to IA, and A to the
-interrupt message.
+Whenever IA is zero, all interrupts are ignored and the queue will be empty.
+
+After the DCPU-16 executes any instruction, if IH is 0 and IA is set to
+something other than 0, the first interrupt in the queue is dequeued and
+triggered; the DCPU-16 will set IH to 1, push PC to the stack, followed by
+pushing A to the stack, then set the PC to IA, and A to the interrupt message.
 
 Interrupt handlers should end with RFI, which will set IH to 0 and pop A and PC
 from the stack as a single atomic instruction.
