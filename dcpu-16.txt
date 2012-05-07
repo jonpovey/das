@@ -176,10 +176,10 @@ As interrupts arrive at the DCPU-16, either from hardware or INT instruction,
 they are added to a queue. If the queue grows longer than 256 interrupts, the
 DCPU-16 will catch fire.
 
+Whenever IA is zero, all interrupts are ignored and the queue will be empty.
+
 After the DCPU-16 executes any instruction, if interrupt dequeueing is turned
-on, IA is checked. If it is zero, the interrupt queue is immediately cleared,
-ignoring any interrupts.
-If IA is set to something other than 0, the first interrupt in the queue is
+on and IA is set to something other than 0, the first interrupt in the queue is
 dequeued and triggered; the DCPU-16 will turn off interrupt dequeueing, push PC
 to the stack, followed by pushing A to the stack, then set the PC to IA, and A
 to the interrupt message.
