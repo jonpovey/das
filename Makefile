@@ -34,7 +34,7 @@ y.tab.h y.tab.c: das.y Makefile $(HDRS)
 	yacc -d $<
 
 lex.yy.c: das.l $(HDRS) Makefile
-	lex $<
+	lex --debug $<
 
 clean:
 	rm -f $(PROG) y.tab.h y.tab.c lex.yy.c
