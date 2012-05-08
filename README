@@ -23,10 +23,11 @@ Features:
 - Little/big endian output switch
 
 TODO list:
+- Fix and automate tests
+- Write some clues for new users
 - Macros
 - Local symbols
 - Work on supporting llvm-dcpu16
 - Revisit label redefinition semantics (latest wins, maybe unusual)
 - Nicer warnings and errors
-- Error on undefined symbol (instead of pretending it's zero)
 - Hint register EX if symbol 'O' is found but undefined

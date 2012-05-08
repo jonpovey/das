@@ -49,7 +49,7 @@ DAT|dat				{ return DAT; }
 
 [-,+*/|&^()~\[\]\n]	return *yytext;
 
-[ \t]+		;		/* ignore whitespace */
+[ \t\r]+	;		/* ignore whitespace and DOS line endings */
 ;.*			;		/* comment */
 
 					/* Magic to fix input with missing \n on last line */
