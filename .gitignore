@@ -4,7 +4,7 @@ lex.yy.c
 local.mk
 y.tab.c
 y.tab.h
-*.pdf
-*.s
+/*.pdf
+/*.s
 _*
 *.bin
