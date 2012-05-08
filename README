@@ -30,4 +30,5 @@ TODO list:
 - Work on supporting llvm-dcpu16
 - Revisit label redefinition semantics (latest wins, maybe unusual)
 - Nicer warnings and errors
+- Error on undefined symbol (instead of pretending it's zero)
 - Hint register EX if symbol 'O' is found but undefined
