@@ -49,5 +49,20 @@ lex.yy.c: lex.yy.premade.c
 	cp lex.yy.premade.c lex.yy.c
 endif
 
+.PHONY: clean
 clean:
 	rm -f $(PROG) y.tab.h y.tab.c lex.yy.c
+
+.PHONY: install
+install: $(PROG)
+	@if [ -w /usr/bin ]; then \
+		echo "Installing to /usr/bin"; \
+		INSTALLDIR=/usr/bin; \
+	elif [ -w $$HOME/bin ]; then \
+		echo "/usr/bin not writable (need sudo?)"; \
+		echo "installing to $$HOME/bin"; \
+		INSTALLDIR=$$HOME/bin; \
+	else \
+		echo "Error: /usr/bin and $$HOME/bin not writable. Install where?"; \
+		false; \
+	fi && cp $(PROG) $$INSTALLDIR
