@@ -42,7 +42,7 @@ struct symbol* symbol_inlist(char *name, struct list_head *head)
 void check_redefine(struct symbol *s)
 {
 	if (s->flags & SYM_LABEL || s->flags & SYM_DEF) {
-		error("Error: symbol '%s' redefined", s->name);
+		error("symbol '%s' redefined", s->name);
 	}
 	return;
 }
@@ -79,9 +79,55 @@ void directive_equ(struct symbol *s, struct expr *e)
 	add_statement(s, &equ_statement_ops);
 }
 
+/* called when a symbol is found to be used (not defined) */
+void symbol_mark_used(struct symbol *s)
+{
+	s->flags |= SYM_USED;
+}
+
 /*
  * Analysis
  */
+
+static int symbol_validate(struct symbol *s)
+{
+	int ret = 0;
+
+	/* FIXME report where in the source problems come from */
+	if (!(s->flags & SYM_USED)) {
+		warn("Unused symbol '%s'", s->name);
+	}
+	if (!(s->flags & (SYM_DEF | SYM_LABEL))) {
+		error("Undefined symbol '%s'", s->name);
+		if (!strcasecmp("O", s->name)) {
+			/* maybe old 1.1 source trying to use Overflow register. Hint. */
+			warn("Trying to use old register 'O'? It's now called 'EX'.");
+		}
+		ret = 1;
+	}
+	return ret;
+}
+
+/*
+ * special-case validate symbols at the moment. Maybe this should be a
+ * generic statement validate thing, walk and validate all statements.
+ * return 0 if no errors.
+ */
+int symbols_validate(void)
+{
+	struct symbol *s;
+	int ret = 0;
+
+	if (list_empty(&all_symbols)) {
+		return 0;
+	} else {
+		list_for_each_entry(s, &all_symbols, list) {
+			ret = (symbol_validate(s) || ret);
+		}
+	}
+	DBG("returning %d\n", ret);
+	return ret;
+}
 
 /*
  * when a label is called in analysis pass, set its value to PC.

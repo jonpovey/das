@@ -94,6 +94,7 @@ struct expr* gen_symbol_expr(struct symbol *sym)
 	e->maychange = 1;
 	e->value = 0;
 	e->symbol = sym;
+	symbol_mark_used(sym);
 	return e;
 }
 

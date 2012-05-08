@@ -80,9 +80,7 @@ I just might prioritise it.
 - Relocation and linking; extern and global symbols
 - Aim to support llvm-dcpu16
 
-#### Minor things TODO
-- Error on undefined symbol (instead of pretending it's zero)
-- Hint register EX if symbol 'O' is found but undefined
+#### Minor things
 - Grownup Makefile with auto-dependencies and good stuff.
 
 BlueDAS is written by Jon Povey <jon@leetfighter.com> a.k.a. blueshift /

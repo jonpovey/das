@@ -53,13 +53,13 @@ struct dat_elem* new_string_dat_elem(char *str)
 	struct dat_elem *e = calloc(sizeof(*e), 1);
 	size_t len = strlen(str);
 
-	printf("string dat: %s becomes:\n", str);
+	DBG("string dat: %s becomes:\n", str);
 	str[len - 1] = 0;				/* chop off trailing quote */
 	e->type = DATTYPE_STRING;
 	e->data = malloc(strlen(str));
 	/* e->data will be less one ", making space for NULL terminator */
 	e->nwords = unescape_c_string(str + 1, e->data);
-	printf("'%s'\n", (char*)e->data);
+	DBG("'%s'\n", (char*)e->data);
 	/* e->next is null */
 	return e;
 }

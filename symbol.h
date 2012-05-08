@@ -17,10 +17,10 @@ struct symbol;
 struct symbol* symbol_parse(char *name);
 void label_parse(char *name);
 void directive_equ(struct symbol *sym, struct expr *expr);
+void symbol_mark_used(struct symbol *sym);
 
 /* Analysis */
-struct symbol* first_defined_symbol(void);
-struct symbol* next_defined_symbol(struct symbol *symbol);
+int symbols_validate(void);
 int symbol_value(struct symbol *sym);
 
 /* Output */

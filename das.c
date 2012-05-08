@@ -223,6 +223,15 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
+	/*
+	 * Do validation pass before analysis. This should probably be all
+	 * statements, for now just symbols.
+	 */
+	if (symbols_validate()) {
+		fprintf(stderr, "Aborting from validation error\n");
+		return 1;
+	}
+
 	/* resolve instruction lengths and symbol values */
 	do {
 		ret = statements_analyse();
