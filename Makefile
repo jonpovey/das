@@ -16,7 +16,7 @@ SRCS := y.tab.c lex.yy.c dasdefs.c das.c instruction.c symbol.c expression.c \
 		statement.c dat.c
 HDRS := dasdefs.h das.h list.h instruction.h symbol.h expression.h common.h \
 		statement.h dat.h output.h
-DEPS := $(SRCS) $(HDRS) Makefile $(EXTRAMKS)
+DEPS := $(SRCS) $(HDRS) y.tab.h Makefile $(EXTRAMKS)
 
 CFLAGS := -Wall
 
@@ -30,11 +30,24 @@ CFLAGS := -Wall
 $(PROG): $(DEPS)
 	$(CC) $(CFLAGS) -o $@ $(SRCS)
 
+ifeq (1,$(USE_YACC))
 y.tab.h y.tab.c: das.y Makefile $(HDRS)
 	yacc -d $<
+else
+y.tab.h y.tab.c: y.tab.premade.h y.tab.premade.c
+	@echo USE_YACC not set: using premade sources
+	cp y.tab.premade.h y.tab.h
+	cp y.tab.premade.c y.tab.c
+endif
 
+ifeq (1,$(USE_LEX))
 lex.yy.c: das.l $(HDRS) Makefile
 	lex $<
+else
+lex.yy.c: lex.yy.premade.c
+	@echo USE_LEX not set: using premade sources
+	cp lex.yy.premade.c lex.yy.c
+endif
 
 clean:
 	rm -f $(PROG) y.tab.h y.tab.c lex.yy.c
