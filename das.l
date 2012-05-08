@@ -30,8 +30,8 @@ op1_lc		jsr|hcf|int|rfi|ia[gsq]|hw[nqi]
 %%
 
 \.set|\.equ			return EQU;
-:{symbol}			{ yylval.string = yytext + 1; return LABEL; }
-{symbol}:			{
+":"{symbol}			{ yylval.string = yytext + 1; return LABEL; }
+{symbol}":"			{
 						yylval.string = yytext;
 						yytext[strlen(yytext) - 1] = 0;
 						return LABEL;
