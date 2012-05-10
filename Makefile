@@ -59,24 +59,30 @@ CFLAGS += -Wall -g
 
 .DEFAULT_GOAL := $(PROG)
 
-ifeq (1,$(USE_YACC))
 $(SRCDIR)/y.tab.c $(SRCDIR)/y.tab.h: $(SRCDIR)/das.y $(MAKEFILES)
-	@echo "YACC $<"
+ifeq (1,$(USE_YACC))
+	@echo " + YACC $<"
 	$(Q)yacc -d -o $@ $<
+else
+	@echo " + KEEP $@     (USE_YACC not set)"
+	$(Q)touch $@
 endif
 
-ifeq (1,$(USE_LEX))
 $(SRCDIR)/lex.yy.c: $(SRCDIR)/das.l $(SRCDIR)/y.tab.h $(MAKEFILES)
-	@echo " LEX $<"
+ifeq (1,$(USE_LEX))
+	@echo " +  LEX $<"
 	$(Q)lex -o$@ $<
+else
+	@echo " + KEEP $@     (USE_LEX not set)"
+	$(Q)touch $@
 endif
 
 $(PROG): $(OBJS) $(LINKERSCRIPT)
-	@echo "LINK $@"
+	@echo " + LINK $@"
 	$(Q)$(CC) $(LDFLAGS) $(OBJS) -o $@
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c $(MAKEFILES)
-	@echo "  CC $<"
+	@echo " +   CC $<"
 	@mkdir -p $(dir $@)
 	$(Q)$(CC) -c $(CFLAGS) -MD $< -o $@
     # -MD creates both .d and .o in one pass. Now process the .d file
