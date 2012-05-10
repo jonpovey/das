@@ -81,6 +81,8 @@ I just might prioritise it.
 - Aim to support llvm-dcpu16
 
 #### Minor things
+- Fix `[SP + const]` form
+- Support `[SP++]`, [--SP]`
 - Grownup Makefile with auto-dependencies and good stuff.
 
 BlueDAS is written by Jon Povey <jon@leetfighter.com> a.k.a. blueshift /
