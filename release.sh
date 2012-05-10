@@ -14,6 +14,7 @@ rm -rf $DIR
 mkdir -p $DIR
 cp README.md $DIR/README.md.txt
 cp das $DIR
+strip $DIR/das
 tar zcf $DIR.tar.gz $DIR
 rm $DIR/das
 cp das.exe $DIR

@@ -96,6 +96,7 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.c $(MAKEFILES)
 clean:
 	rm -rf $(PROG) $(BUILDDIR)
 
+ifeq ($(origin WINDOWS), undefined)
 .PHONY: install
 install: $(PROG)
 	$(Q)$(STRIP) $(PROG)
@@ -110,3 +111,4 @@ install: $(PROG)
 		echo "Error: /usr/bin and $$HOME/bin not writable. Install where?"; \
 		false; \
 	fi && cp $(PROG) $$INSTALLDIR
+endif
