@@ -85,6 +85,9 @@ I just might prioritise it.
 - Support `[SP++]`, [--SP]`
 - Grownup Makefile with auto-dependencies and good stuff.
 
+---
+DCPU-16 spec 1.7 can be found here: http://pastebin.com/raw.php?i=Q4JvQvnM
+
 BlueDAS is written by Jon Povey <jon@leetfighter.com> a.k.a. blueshift /
 cheese_magnet, for fun and to learn lex and yacc.  
 Comments, patches, abuse welcome.
