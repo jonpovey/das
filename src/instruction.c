@@ -268,7 +268,7 @@ void operand_genbits(struct operand *o)
 		exprval = expr_value(o->expr);
 		ret = mask_constant(exprval, &valword);
 		if (ret) {
-			warn("Value %d(0x%x) does not fit in 16 bits, masked to 0x%x",
+			warn("Value %d(0x%x) does not fit in 16 bits, masked to 0x%hx",
 				exprval, exprval, valword);
 		}
 	}
