@@ -1,60 +1,98 @@
-ifeq ($(origin WINDOWS), undefined)
-  PROG := das
-  CC := gcc
-else
-  PROG := das.exe
-  CC := i586-mingw32msvc-gcc
-endif
-
-# This makefile could use many improvements, particularly partial compilation
-# and auto-dependencies.
-
 # extra / local unversioned includes, if present (e.g. debug CFLAGS)
 EXTRAMKS := $(wildcard *.mk)
-
-SRCS := y.tab.c lex.yy.c dasdefs.c das.c instruction.c symbol.c expression.c \
-		statement.c dat.c
-HDRS := dasdefs.h das.h list.h instruction.h symbol.h expression.h common.h \
-		statement.h dat.h output.h
-DEPS := $(SRCS) $(HDRS) y.tab.h Makefile $(EXTRAMKS)
-
-CFLAGS := -Wall
-
+MAKEFILES := Makefile $(EXTRAMKS)
 -include $(EXTRAMKS)
 
-# TODO: partial compliation, auto dependencies
+SRCDIR := src
+
+ifeq ($(origin WINDOWS), undefined)
+  PROG := das
+  BUILDDIR := build
+  ifneq ($(origin LINUX_BUILD_32BIT), undefined)
+    # I run 64-bit but normally build 32-bit so the distributed binaries will
+    # work for more people.
+    CFLAGS += -m32
+    LDFLAGS += -m32
+  else
+    $(info wibble)
+  endif
+else
+  PROG := das.exe
+  CROSS_COMPILE ?= i586-mingw32msvc-
+  BUILDDIR := win32_build
+endif
+
+CC ?= $(CROSS_COMPILE)gcc
+STRIP ?= $(CROSS_COMPILE)strip
+
+OBJDIR := $(BUILDDIR)
+DEPDIR := $(BUILDDIR)/dep
+
+# quietness
+ifneq (1,$(V))
+  override Q=@
+else
+  override Q=
+endif
+
+CSRCS := y.tab.c lex.yy.c dasdefs.c das.c instruction.c symbol.c expression.c \
+		statement.c dat.c
+CSRCS:=$(addprefix $(SRCDIR)/, $(CSRCS))
+
+#YACCIN  := $(SRCDIR)/das.y
+#YACCOUT := $(YACCIN:%.y=$(BUILDDIR)/lex.%.c)
+#YACCSRC := $(YACCOUT:%.c=%.o)
+#LEXIN   := $(SRCDIR)/das.l
+#LEXOUT  := $(LEXIN:$(SRCDIR)/%.l
+
+#CSRCS:=$(CSRCS) $(YACCSRC) $(LEXSRC)
+SRCS:=$(CSRCS)
+OBJS:=$(SRCS:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
+DEPS:=$(SRCS:$(SRCDIR)/%.c=$(DEPDIR)/%.d)
+
+-include $(DEPS)
+
+CFLAGS += -Wall -g
 
 .SUFFIXES:
 #MAKEFLAGS += --no-builtin-rules
 
-$(PROG): $(DEPS)
-	$(CC) $(CFLAGS) -o $@ $(SRCS)
+.DEFAULT_GOAL := $(PROG)
 
 ifeq (1,$(USE_YACC))
-y.tab.h y.tab.c: das.y Makefile $(HDRS)
-	yacc -d $<
-else
-y.tab.h y.tab.c: y.tab.premade.h y.tab.premade.c
-	@echo USE_YACC not set: using premade sources
-	cp y.tab.premade.h y.tab.h
-	cp y.tab.premade.c y.tab.c
+$(SRCDIR)/y.tab.c $(SRCDIR)/y.tab.h: $(SRCDIR)/das.y $(MAKEFILES)
+	@echo "YACC $<"
+	$(Q)yacc -d -o $@ $<
 endif
 
 ifeq (1,$(USE_LEX))
-lex.yy.c: das.l $(HDRS) Makefile
-	lex $<
-else
-lex.yy.c: lex.yy.premade.c
-	@echo USE_LEX not set: using premade sources
-	cp lex.yy.premade.c lex.yy.c
+$(SRCDIR)/lex.yy.c: $(SRCDIR)/das.l $(SRCDIR)/y.tab.h $(MAKEFILES)
+	@echo " LEX $<"
+	$(Q)lex -o$@ $<
 endif
+
+$(PROG): $(OBJS) $(LINKERSCRIPT)
+	@echo "LINK $@"
+	$(Q)$(CC) $(LDFLAGS) $(OBJS) -o $@
+
+$(OBJDIR)/%.o: $(SRCDIR)/%.c $(MAKEFILES)
+	@echo "  CC $<"
+	@mkdir -p $(dir $@)
+	$(Q)$(CC) -c $(CFLAGS) -MD $< -o $@
+    # -MD creates both .d and .o in one pass. Now process the .d file
+	@mkdir -p $(dir $(DEPDIR)/$*); \
+	cp $(OBJDIR)/$*.d $(DEPDIR)/$*.d; \
+	sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
+		-e '/^$$/ d' -e 's/$$/ :/' < $(OBJDIR)/$*.d >> $(DEPDIR)/$*.d; \
+	rm -f $(OBJDIR)/$*.d
 
 .PHONY: clean
 clean:
-	rm -f $(PROG) y.tab.h y.tab.c lex.yy.c
+	rm -rf $(PROG) $(BUILDDIR)
 
 .PHONY: install
 install: $(PROG)
+	$(Q)$(STRIP) $(PROG)
 	@if [ -w /usr/bin ]; then \
 		echo "Installing to /usr/bin"; \
 		INSTALLDIR=/usr/bin; \
