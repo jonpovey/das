@@ -75,6 +75,26 @@ void operand_validate(struct operand *o)
 	if (o->style == OPSTYLE_PLUS && ! o->indirect) {
 		error("Register + constant illegal outside [brackets]");
 	}
+
+	/*
+	 * transform [SP] style into PICK/PEEK/PUSH/POP.
+	 * maybe should not be doing this here.. maybe in gen_operand()?
+	 */
+	if (o->indirect && o->reg == REG_SP) {
+		if (o->style == OPSTYLE_PLUS) {
+			/* PICK */
+			o->style = OPSTYLE_PICK;
+			o->reg = REG_PICK;
+		} else if (o->style == OPSTYLE_SOLO) {
+			/* PEEK */
+			o->reg = REG_PEEK;
+		} else {
+			/* not implemented yet: SP++, --SP */
+			BUG();
+		}
+		o->indirect = 0;
+	}
+
 	if (o->indirect && o->reg) {
 		/* only general-purpose registers and SP allowed (solo or + const) */
 		if (is_gpreg(o->reg) || o->reg == REG_SP) {
