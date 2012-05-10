@@ -8,7 +8,15 @@
   #undef DEBUG
 #endif
 
-#include "common.h"
+#include <assert.h>
+#include <error.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "dasdefs.h"
+#include "instruction.h"
+#include "output.h"
+#include "statement.h"
 
 struct operand {
 	enum opstyle style;

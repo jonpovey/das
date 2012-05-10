@@ -4,7 +4,15 @@
  * Copyright 2012 Jon Povey <jon@leetfighter.com>
  * Released under the GPL v2
  */
-#include "common.h"
+#include <assert.h>
+#include <string.h>
+#include <stdlib.h>
+
+#include "das.h"
+#include "expression.h"
+#include "list.h"
+#include "output.h"
+#include "statement.h"
 
 enum sym_flags {
 	SYM_LABEL = 0x1,	/* definition label found */

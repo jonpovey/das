@@ -8,7 +8,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "common.h"
+#include "dasdefs.h"
+#include "output.h"
 
 /*
  * macro magic. use GCC designated initialisers to build a sparse array

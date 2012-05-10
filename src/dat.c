@@ -1,4 +1,12 @@
-#include "common.h"
+#include <assert.h>
+#include <string.h>
+#include <stdlib.h>
+
+#include "das.h"
+#include "dasdefs.h"
+#include "expression.h"
+#include "output.h"
+#include "statement.h"
 
 enum dat_types {
 	DATTYPE_STRING,

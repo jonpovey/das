@@ -10,7 +10,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "common.h"
+#include "das.h"
+#include "dasdefs.h"
+#include "output.h"
+#include "statement.h"
+#include "symbol.h"
 
 int yyparse(void);
 extern FILE *yyin;

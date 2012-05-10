@@ -5,7 +5,12 @@
  * Released under the GPL v2
  *
  */
-#include "common.h"
+#include <assert.h>
+#include <string.h>
+#include <stdlib.h>
+
+#include "symbol.h"
+#include "output.h"
 #include "y.tab.h"
 
 enum expr_type {

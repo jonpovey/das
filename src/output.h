@@ -1,6 +1,10 @@
 #ifndef OUTPUT_H
 #define OUTPUT_H
 
+#include <stdio.h>
+
+extern int das_error;
+
 /* wrap fprintf as print() so extra things may be added if wanted */
 #define print(to, fmt, args...) fprintf(to, fmt, ##args)
 
@@ -8,6 +12,16 @@
 #define info(fmt, args...) do { \
 	if (options.verbose) \
 		printf(fmt, ##args); \
+} while (0)
+
+/* fixme: better errors and warnings, with line numbers and such */
+#define error(fmt, args...) do { \
+	fprintf(stderr, "error: " fmt "\n", ##args); \
+	das_error = 1; \
+} while (0)
+
+#define warn(fmt, args...) do { \
+	fprintf(stderr, "warning: " fmt "\n", ##args); \
 } while (0)
 
 /* report internal bugs */

@@ -6,7 +6,7 @@
 void yyerror(char *);
 #include "y.tab.h"
 #include "dasdefs.h"
-#include "das.h"
+#include "output.h"
 static int get_constant(void);
 %}
 

@@ -11,7 +11,6 @@ struct symbol;
 
 #include "expression.h"
 #include "instruction.h"
-#include "list.h"
 
 /* Parse */
 struct symbol* symbol_parse(char *name);

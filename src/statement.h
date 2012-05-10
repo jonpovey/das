@@ -8,6 +8,8 @@
  */
 #include <stdio.h>
 
+#include "dasdefs.h"
+
 enum stmt_type {
 	STMT_NONE,
 	STMT_INSTRUCTION,

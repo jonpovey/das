@@ -4,7 +4,14 @@
  * Copyright 2012 Jon Povey <jon@leetfighter.com>
  * Released under the GPL v2
  */
-#include "common.h"
+#include <assert.h>
+#include <string.h>
+#include <stdlib.h>
+
+#include "das.h"
+#include "list.h"
+#include "output.h"
+#include "statement.h"
 
 #define MAX_BINARY_WORDS (1 << 16)			/* 16-bit (word) address space */
 #define MAX_BINARY_BYTES (MAX_BINARY_WORDS * 2)

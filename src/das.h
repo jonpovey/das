@@ -8,8 +8,6 @@
 #define VERSION "0.13"
 #define VERSTRING "BlueDAS DCPU-16 Assembler, version " VERSION
 
-extern int das_error;
-
 extern struct options {
 	int asm_print_pc;
 	int asm_main_col;
@@ -20,15 +18,5 @@ extern struct options {
 	int verbose;
 	int big_endian;
 } options;
-
-/* fixme: better errors and warnings, with line numbers and such */
-#define error(fmt, args...) do { \
-	fprintf(stderr, "error: " fmt "\n", ##args); \
-	das_error = 1; \
-} while (0)
-
-#define warn(fmt, args...) do { \
-	fprintf(stderr, "warning: " fmt "\n", ##args); \
-} while (0)
 
 #endif // DAS_H

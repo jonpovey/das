@@ -5,7 +5,12 @@
  */
 #include <stdio.h>
 
-#include "common.h"
+#include "expression.h"
+#include "dasdefs.h"
+#include "dat.h"
+#include "instruction.h"
+#include "output.h"
+#include "symbol.h"
 
 int yylex();
 
