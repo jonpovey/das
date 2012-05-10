@@ -419,12 +419,12 @@ int operand_print_asm(char *buf, struct operand *o)
 	} else {
 		if (o->indirect)
 			count += sprintf(buf + count, "[");
-		if (o->expr)
-			count += expr_print_asm(buf + count, o->expr);
-		if (o->expr && o->reg)
-			count += sprintf(buf + count, " + ");
 		if (o->reg)
 			count += sprintf(buf + count, "%s", reg2str(o->reg));
+		if (o->expr && o->reg)
+			count += sprintf(buf + count, " + ");
+		if (o->expr)
+			count += expr_print_asm(buf + count, o->expr);
 		if (o->indirect)
 			count += sprintf(buf + count, "]");
 	}
