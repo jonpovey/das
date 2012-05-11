@@ -5,3 +5,4 @@ local.mk
 /*.s
 _*
 *.bin
+/*build/

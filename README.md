@@ -22,6 +22,8 @@ Mac OSX users have to build it themselves, for now.
 - Strings support C escape sequences e.g. `"\x0f\t1f CHARACTERS\n\0"`
 - Supports `.set` or `.equ` for explicit symbols
 - Supports `:notch-style` or `traditional:` label syntax
+- Accepts `PICK/POP` and `[SP + const]/[SP++]` stack styles and will translate
+  and print either style
 - Little/big endian output switch (default little-endian)
 - Accepts lowercase opcodes and register names
 - Pretty printed annotated assembly dump shows machine code and optional PC.
@@ -44,7 +46,7 @@ Mac OSX users have to build it themselves, for now.
 Just run `das` with no arguments to get something like this:
 
 ```
-BlueDAS DCPU-16 Assembler, version 0.11
+BlueDAS DCPU-16 Assembler, version 0.13
 Latest and docs at: https://github.com/jonpovey/das
 
 Usage: das [OPTIONS] asmfile
@@ -55,9 +57,11 @@ OPTIONS:
   -d, --dump         Dump human-readable listing to stdout
   --dumpfile file    Dump to file instead
   --no-dump-pc       Omit PC column from dump; makes dump a valid source file
+  --sp-style         Dump [SP] style for stack access. Default PUSH/POP style
   --le               Generate little-endian binary (default big-endian)
 
 The character '-' for files means read/write to stdin/stdout instead.
+
 ```
 
 ## How do I install it?
@@ -79,10 +83,6 @@ I just might prioritise it.
 - Local symbols
 - Relocation and linking; extern and global symbols
 - Aim to support llvm-dcpu16
-
-#### Minor things
-- Support `[SP++]`, [--SP]`
-- Option switch to print PICK/PEEK form or [SP] form
 
 ---
 DCPU-16 spec 1.7 can be found here: http://pastebin.com/raw.php?i=Q4JvQvnM

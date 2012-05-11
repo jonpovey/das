@@ -5,6 +5,10 @@
 
 extern int das_error;
 
+extern struct outopts {
+	int stack_style_sp;
+} outopts;
+
 /* wrap fprintf as print() so extra things may be added if wanted */
 #define print(to, fmt, args...) fprintf(to, fmt, ##args)
 

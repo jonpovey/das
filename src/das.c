@@ -52,6 +52,7 @@ void print_usage(void)
 	fprintf(stderr, "  -d, --dump         Dump human-readable listing to stdout\n");
 	fprintf(stderr, "  --dumpfile file    Dump to file instead\n");
 	fprintf(stderr, "  --no-dump-pc       Omit PC column from dump; makes dump a valid source file\n");
+	fprintf(stderr, "  --sp-style         Dump [SP] style for stack access. Default PUSH/POP style\n");
 	fprintf(stderr, "  --le               Generate little-endian binary (default big-endian)\n");
 	fprintf(stderr, "\nThe character '-' for files means read/write to stdin/stdout instead.\n");
 }
@@ -74,6 +75,7 @@ void handle_args(int argc, char **argv)
 			{"no-dump-pc",	no_argument,		0, 0},
 			{"dump",		no_argument,		0, 'd'},
 			{"verbose",		no_argument,		0, 'v'},
+			{"sp-style",	no_argument,		0, 0},
 			{},
 		};
 
@@ -99,6 +101,9 @@ void handle_args(int argc, char **argv)
 				break;
 			case 2:
 				options.asm_print_pc = 0;
+				break;
+			case 5:
+				outopts.stack_style_sp = 1;
 				break;
 			default:
 				BUG();

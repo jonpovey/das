@@ -13,13 +13,15 @@ ifeq ($(origin WINDOWS), undefined)
     # work for more people.
     CFLAGS += -m32
     LDFLAGS += -m32
-  else
-    $(info wibble)
   endif
 else
   PROG := das.exe
   CROSS_COMPILE ?= i586-mingw32msvc-
   BUILDDIR := win32_build
+endif
+
+ifneq ($(origin JAMZ), undefined)
+  $(info wibble)
 endif
 
 CC ?= $(CROSS_COMPILE)gcc
@@ -36,7 +38,7 @@ else
 endif
 
 CSRCS := y.tab.c lex.yy.c dasdefs.c das.c instruction.c symbol.c expression.c \
-		statement.c dat.c
+		statement.c dat.c output.c
 CSRCS:=$(addprefix $(SRCDIR)/, $(CSRCS))
 
 #YACCIN  := $(SRCDIR)/das.y
@@ -62,7 +64,7 @@ CFLAGS += -Wall -g
 $(SRCDIR)/y.tab.c $(SRCDIR)/y.tab.h: $(SRCDIR)/das.y $(MAKEFILES)
 ifeq (1,$(USE_YACC))
 	@echo " + YACC $<"
-	$(Q)yacc -d -o $@ $<
+	$(Q)yacc $(YACCFLAGS) -d -o $@ $<
 else
 	@echo " + KEEP $@     (USE_YACC not set)"
 	$(Q)touch $@
@@ -71,7 +73,7 @@ endif
 $(SRCDIR)/lex.yy.c: $(SRCDIR)/das.l $(SRCDIR)/y.tab.h $(MAKEFILES)
 ifeq (1,$(USE_LEX))
 	@echo " +  LEX $<"
-	$(Q)lex -o$@ $<
+	$(Q)lex $(LEXFLAGS) -o$@ $<
 else
 	@echo " + KEEP $@     (USE_LEX not set)"
 	$(Q)touch $@

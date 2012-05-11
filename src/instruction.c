@@ -428,26 +428,34 @@ int instruction_get_binary(u16 *dest, void *private)
 int operand_print_asm(char *buf, struct operand *o)
 {
 	int count = 0;
+	int indirect;
 
 	assert(o);
+	indirect = o->indirect;
 	if (o->style == OPSTYLE_PICK) {
 		assert(o->reg == REG_PICK);
 		assert(o->expr);
 		/* can't be indirect */
-		count += sprintf(buf + count, "%s ", reg2str(o->reg));
-		count += expr_print_asm(buf + count, o->expr);
-	} else {
-		if (o->indirect)
-			count += sprintf(buf + count, "[");
-		if (o->reg)
-			count += sprintf(buf + count, "%s", reg2str(o->reg));
-		if (o->expr && o->reg)
-			count += sprintf(buf + count, " + ");
-		if (o->expr)
+		if (outopts.stack_style_sp) {
+			/* pretend to be indirect and fall through to get brackets */
+			indirect = 1;
+		} else {
+			/* print as special PICK style */
+			count += sprintf(buf + count, "%s ", reg2str(o->reg));
 			count += expr_print_asm(buf + count, o->expr);
-		if (o->indirect)
-			count += sprintf(buf + count, "]");
+			return count;
+		}
 	}
+	if (indirect)
+		count += sprintf(buf + count, "[");
+	if (o->reg)
+		count += sprintf(buf + count, "%s", reg2str(o->reg));
+	if (o->expr && o->reg)
+		count += sprintf(buf + count, " + ");
+	if (o->expr)
+		count += expr_print_asm(buf + count, o->expr);
+	if (indirect)
+		count += sprintf(buf + count, "]");
 	return count;
 }
 

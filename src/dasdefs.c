@@ -99,6 +99,14 @@ int str2reg(char *str)
 char* reg2str(int reg)
 {
 	if (valid_reg(reg)) {
+		if (outopts.stack_style_sp) {
+			switch (reg) {
+			case REG_PUSH: return "[--SP]";
+			case REG_POP:  return "[SP++]";
+			case REG_PEEK: return "[SP]";
+			case REG_PICK: return "SP";		// rest handled in operand
+			}
+		}
 		return registers[reg].name;
 	} else {
 		return NULL;
