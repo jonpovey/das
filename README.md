@@ -81,8 +81,8 @@ I just might prioritise it.
 - Aim to support llvm-dcpu16
 
 #### Minor things
-- Fix `[SP + const]` form
 - Support `[SP++]`, [--SP]`
+- Option switch to print PICK/PEEK form or [SP] form
 
 ---
 DCPU-16 spec 1.7 can be found here: http://pastebin.com/raw.php?i=Q4JvQvnM
