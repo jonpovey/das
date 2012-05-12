@@ -9,7 +9,7 @@ Okay, sheesh. [**Binaries for Linux, Windows and Mac OSX are here**]
 Linux and Windows users, just copy the executable somewhere in your PATH, or
 wherever you like.
 
-#0x10x-dev user 'starling' contributed an install script for OSX users
+`#0x10x-dev` user 'starling' contributed an install script for OSX users
 (fancy!). I can't vouch for this but you might like to try this command:
 
 	brew install https://raw.github.com/gist/2664491/das.rb
