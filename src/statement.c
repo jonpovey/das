@@ -128,6 +128,7 @@ int statements_get_binary(u16 **dest)
 {
 	statement *s;
 	int ret, offset, size;
+	int too_big = 0;
 
 	*dest = realloc(*dest, MAX_BINARY_BYTES);
 	offset = 0;
@@ -139,20 +140,28 @@ int statements_get_binary(u16 **dest)
 				return size;	// returned error
 
 			if (offset + size > MAX_BINARY_WORDS) {
-				fprintf(stderr, "Error: Binary size exceeds address space\n");
-				return -1;
+				too_big = 1;
+				/*
+				 * stop getting the binary, but continue on to get the total
+				 * binary size so we can report it nicely
+				 */
 			}
 
-			if (!s->ops->get_binary) {
-				fprintf(stderr, "get_binary unsupported wtf?\n");
+			if (BUG_ON(!s->ops->get_binary))
 				return -1;
+
+			if (!too_big) {
+				ret = s->ops->get_binary(*dest + offset, s->private);
+				if (ret < 0)
+					return ret;		// returned error
 			}
-			ret = s->ops->get_binary(*dest + offset, s->private);
-			if (ret < 0)
-				return ret;		// returned error
 
 			offset += size;
 		}
+	}
+	if (too_big) {
+		error("Binary size 0x%x exceeds address space (0x10000)\n", offset);
+		return -1;
 	}
 	return offset;
 }
