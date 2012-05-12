@@ -43,13 +43,13 @@ int arrsearch(char *str, char **arr, int arrsize)
 	return -1;
 }
 
-inline int valid_reg(int reg)
+int valid_reg(int reg)
 {
 	/* reg 0 is not valid, it means "no register" */
 	return reg > 0 && reg < ARRAY_SIZE(registers);
 }
 
-inline int valid_opcode(int op)
+int valid_opcode(int op)
 {
 	return op >= 0 && op < ARRAY_SIZE(opcodes) && opcodes[op];
 }
@@ -125,7 +125,7 @@ int is_gpreg(int reg)
 	return registers[reg].is_gp;
 }
 
-inline int isoctal(int c) { return c >= '0' && c <= '7'; }
+int isoctal(int c) { return c >= '0' && c <= '7'; }
 
 /*
  * unescape C string into provided buffer, which must be large enough.
