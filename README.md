@@ -3,9 +3,8 @@ This is a command-line assembler, written in C, for the DCPU-16 processor;
 if you don't know what that is, see http://0x10c.com/
 
 ### I don't like reading! Shut up and give me binaries!
-Okay, sheesh. [**Binaries for Linux and Windows are here**]
-(https://github.com/jonpovey/das/downloads).  
-Mac OSX users have to build it themselves, for now.
+Okay, sheesh. [**Binaries for Linux, Windows and Mac OSX are here**]
+(https://github.com/jonpovey/das/downloads).
 
 ### I like reading. Tell me about it.
 - **Agressively optimised short literals**, even when they depend
