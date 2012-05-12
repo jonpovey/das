@@ -6,6 +6,14 @@ if you don't know what that is, see http://0x10c.com/
 Okay, sheesh. [**Binaries for Linux, Windows and Mac OSX are here**]
 (https://github.com/jonpovey/das/downloads).
 
+Linux and Windows users, just copy the executable somewhere in your PATH, or
+wherever you like.
+
+#0x10x-dev user 'starling' contributed an install script for OSX users
+(fancy!). I can't vouch for this but you might like to try this command:
+
+	brew install https://raw.github.com/gist/2664491/das.rb
+
 ### I like reading. Tell me about it.
 - **Agressively optimised short literals**, even when they depend
   on complicated expressions involving symbols
