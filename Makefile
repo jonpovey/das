@@ -24,7 +24,9 @@ ifneq ($(origin JAMZ), undefined)
   $(info wibble)
 endif
 
-CC ?= $(CROSS_COMPILE)gcc
+ifeq ($(origin CC), default)
+	CC = $(CROSS_COMPILE)gcc
+endif
 STRIP ?= $(CROSS_COMPILE)strip
 
 OBJDIR := $(BUILDDIR)
