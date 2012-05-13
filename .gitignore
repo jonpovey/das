@@ -4,5 +4,6 @@ local.mk
 /*.pdf
 /*.s
 _*
-*.bin
+/*.bin
 /*build/
+/tests/results
