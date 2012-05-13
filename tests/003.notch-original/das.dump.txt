@@ -1,0 +1,18 @@
+0000                SET A, 0x30                             ; 7c01 0030
+0002                SET [0x1000], 0x20                      ; 7fc1 0020 1000
+0005                SUB A, [0x1000]                         ; 7803 1000
+0007                IFN A, 0x10                             ; c413
+0008                SET PC, crash                           ; df81
+0009                SET I, 10                               ; acc1
+000a                SET A, 0x2000                           ; 7c01 2000
+000c :loop          SET [I + 0x2000], [A]                   ; 22c1 2000
+000e                SUB I, 1                                ; 88c3
+000f                IFN I, 0                                ; 84d3
+0010                SET PC, loop                            ; b781
+0011                SET X, 4                                ; 9461
+0012                JSR testsub                             ; d420
+0013                SET PC, crash                           ; df81
+0014 :testsub       SHL X, 4                                ; 946f
+0015                SET PC, POP                             ; 6381
+0016 :jon1
+0016 :crash         SET PC, crash                           ; df81

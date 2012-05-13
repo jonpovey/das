@@ -1,0 +1,35 @@
+0000                SET A, -0x12c                           ; 7c01 fed4
+0002                SET A, -3                               ; 7c01 fffd
+0004                SET A, -2                               ; 7c01 fffe
+0006                SET A, -1                               ; 8001
+0007                SET A, 0xffff                           ; 8001
+0008                SET A, 0                                ; 8401
+0009                SET A, 1                                ; 8801
+000a                SET A, -0xffff                          ; 8801
+000b                SET A, 2                                ; 8c01
+000c                SET A, 3                                ; 9001
+000d                SET A, 4                                ; 9401
+000e                SET A, 5                                ; 9801
+000f                SET A, 0x1d                             ; f801
+0010                SET A, 0x1c                             ; f401
+0011                SET A, 0x1e                             ; fc01
+0012                SET A, 0x1001e                          ; fc01
+0013                SET A, 0x1f                             ; 7c01 001f
+0015                SET A, 0x20                             ; 7c01 0020
+0017                SET A, 0x200                            ; 7c01 0200
+0019                SET A, -0x8000                          ; 7c01 8000
+001b                SET A, -0x8001                          ; 7c01 7fff
+001d                SET A, 0xffff                           ; 8001
+001e                SET A, 0x10000                          ; 8401
+001f                SET A, from + 0x20 - to                 ; 7c01 001e
+0021 :from          SET A, from + 0x20 - to                 ; 7c01 001e
+0023 :to            SET A, from + 0x20 - to                 ; fc01
+0024 :end
+0024 :a1            SET A, a2 + 0x20 - b2                   ; 7c01 001f
+0026 :b1
+0026 :a2            SET A, a1 + 0x20 - b1                   ; fc01
+0027 :b2
+0027 :a3            SET A, b4 - a4 - 3                      ; 7c01 fffe
+0029 :b3
+0029 :a4            SET A, b3 - a3 - 3                      ; 8001
+002a :b4
