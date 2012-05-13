@@ -7,6 +7,7 @@ extern int das_error;
 
 extern struct outopts {
 	int stack_style_sp;
+	int omit_dump_header;
 } outopts;
 
 /* wrap fprintf as print() so extra things may be added if wanted */

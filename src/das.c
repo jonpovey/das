@@ -52,6 +52,7 @@ void print_usage(void)
 	fprintf(stderr, "  -d, --dump         Dump human-readable listing to stdout\n");
 	fprintf(stderr, "  --dumpfile file    Dump to file instead\n");
 	fprintf(stderr, "  --no-dump-pc       Omit PC column from dump; makes dump a valid source file\n");
+	fprintf(stderr, "  --no-dump-header   Omit header comments from dump\n");
 	fprintf(stderr, "  --sp-style         Dump [SP] style for stack access. Default PUSH/POP style\n");
 	fprintf(stderr, "  --le               Generate little-endian binary (default big-endian)\n");
 	fprintf(stderr, "\nThe character '-' for files means read/write to stdin/stdout instead.\n");
@@ -76,6 +77,7 @@ void handle_args(int argc, char **argv)
 			{"dump",		no_argument,		0, 'd'},
 			{"verbose",		no_argument,		0, 'v'},
 			{"sp-style",	no_argument,		0, 0},
+			{"no-dump-header", no_argument,		0, 0},
 			{},
 		};
 
@@ -104,6 +106,9 @@ void handle_args(int argc, char **argv)
 				break;
 			case 5:
 				outopts.stack_style_sp = 1;
+				break;
+			case 6:
+				outopts.omit_dump_header = 1;
 				break;
 			default:
 				BUG();
@@ -262,9 +267,11 @@ int main(int argc, char **argv)
 	}
 
 	if (dumpfile) {
-		fprintf(dumpfile, "; Dump from " VERSTRING "\n");
-		if (asmfile != stdin) {
-			fprintf(dumpfile, "; Source file: %s\n", asmpath);
+		if (!outopts.omit_dump_header) {
+			fprintf(dumpfile, "; Dump from " VERSTRING "\n");
+			if (asmfile != stdin) {
+				fprintf(dumpfile, "; Source file: %s\n", asmpath);
+			}
 		}
 		ret = statements_fprint_asm(dumpfile);
 		if (ret < 0) {
