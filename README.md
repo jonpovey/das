@@ -83,8 +83,7 @@ I just might prioritise it.
 
 ### Shortcomings / TODO list
 
-- Better syntax error messages!
-- Automate tests
+- Better syntax error messages
 - Include files
 - Macros
 - `.org`, `.align`
