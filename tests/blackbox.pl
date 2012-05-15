@@ -20,21 +20,23 @@
 # assembler flags for this test.
 # Config options:
 #	; this is a config file comment, will be ignored
-# 	DASFLAGS = [flags]	flags to pass to das when running this test
+# 	DAS_FLAGS = flags	flags to pass to das when running this test
 #	EXPECT_FAILURE		expect das to return nonzero when run on this file
+#
+# TODO: maybe EXPECT_NO_BINARY/_DUMP: error runs should not create these
 #
 # Example config file:
 #	; le_long.s: this file tests little-endian output with no short literals
-#	DASFLAGS = --le --no-short-literals
+#	DAS_FLAGS = --le --no-short-literals
 #
-# Flags an options specific to other assemblers may be added later, e.g.
-#	ORGANICFLAGS = --some-organic-flag
+# Flags and options specific to other assemblers may be added later, e.g.
+#	ORGANIC_FLAGS = --some-organic-flag
 
 use strict 'vars';
 use File::Path qw(make_path);
 my $DEBUG = 0;
 
-my $VER = "1.0";
+my $VER = "1.1";
 my $ASSEMBLER = "das";
 my $RESULTDIR = "results";
 my $REPORT_PATH = "$RESULTDIR/blackbox-report.txt";
@@ -49,8 +51,8 @@ my $HEXDUMP_CMD = "hd -v";
 # evaluated later
 my %assemble_recipes;
 $assemble_recipes{"das"} =
-	'../das --no-dump-header -o $bin_path --dumpfile $dump_path $src_path' .
-	'>$console_path 2>&1';
+	'../das $test_extra_flags --no-dump-header -o $bin_path ' .
+	'--dumpfile $dump_path $src_path >$console_path 2>&1';
 
 my @all_tests;
 my @tests;
@@ -63,6 +65,8 @@ my @summary;
 my @failures;
 my $test;
 my @diff_output;	# globals? who, me?
+my $expect_failure;
+my $test_extra_flags;
 
 sub dbg
 {
@@ -227,7 +231,7 @@ sub do_diff
 	my $new = shift;
 	my $diffcmd = "$DIFFCMD --label reference $old --label new $new 2>&1";
 	@diff_output = `$diffcmd`;
-	dbg "diff returned $?\n";
+	#dbg "diff returned $?\n";
 	return $?
 }
 
@@ -253,9 +257,39 @@ sub do_hex_diff
 	return $?
 }
 
+sub reset_test_config
+{
+	$expect_failure = 0;
+	$test_extra_flags = "";
+}
+
+# read blackbox.cfg for a test
+sub read_test_config
+{
+	my $cfgfile = shift;
+	open(CFG, "<$cfgfile") or bail("Failed opening $cfgfile\n");
+	while (<CFG>) {
+		chomp;
+		s/^(.*);.*$/$1/;		# strip assembler-style comments
+		s/^\s*(.*?)\s*$/$1/;	# strip leading, trailing whitespace
+		if (/^EXPECT_FAILURE$/) {
+			dbg("expect failure\n");
+			$expect_failure = 1;
+		} elsif (/^DAS_FLAGS\s*=\s*(.*)$/) {
+			$test_extra_flags = $1;
+			dbg("extra flags: $1\n");
+		} elsif (/\S+/) {
+			bail("Unknown config '$_' in $cfgfile\n");
+		} else {
+			#dbg("No match for '$_'\n");
+		}
+	}
+	close(CFG);
+}
+
 # for each test (this can be a perl function):
 # create output directory named as input directory
-# grep input source for BLACKBOX options
+# read blackbox.cfg options, if it exists
 # run das from input directory. flags to output binary, dump and console to
 # output directory.
 # collect das return value and compare against EXPECT_FAILURE
@@ -274,7 +308,6 @@ sub run_test
 	my $ref_bin = "";
 	my $ref_dump = "";
 	my $ref_console = "";
-	my $expect_failure = 0;
 
 	my $testname = $test;
 	$testname =~ s/^\d+\.?//;
@@ -282,15 +315,16 @@ sub run_test
 		bail("Test directory $test should be named $test.testname\n");
 	}
 	make_clear_directory($outdir);
+	reset_test_config();
 	dbg "run test $test\n";
 
 	# See what's in the test directory
 	opendir(my $test_dh, $test) or bail("Failed opening directory $test: $!\n");
 	while ($_ = readdir($test_dh)) {
 		if ($_ eq $CONFIG_FILE) {
-			print("FIXME read blackbox config file ($test)\n");
+			read_test_config("$test/$CONFIG_FILE");
 		} elsif (is_src_filename($_)) {
-			dbg "$_ is src\n";
+			#dbg "$_ is src\n";
 			push @srcs, $_;
 		} elsif ($_ eq $OUT_BIN_FILE) {
 			$ref_bin = $_;
@@ -299,7 +333,7 @@ sub run_test
 		} elsif ($_ eq $OUT_CONSOLE_FILE) {
 			$ref_console = $_;
 		} else {
-			dbg "Ignore file $_\n";
+			#dbg "Ignore file $_\n";
 		}
 	}
 	closedir($test_dh);
@@ -321,7 +355,7 @@ sub run_test
 	my $runcmd = $assemble_recipes{'das'};
 	$runcmd =~ s/(\$\w+)/$1/eeg;			# evaluate vars
 
-	dbg "run '$runcmd'\n";
+	#dbg "run '$runcmd'\n";
 	my $retcode = system($runcmd);
 	$retcode >>= 8;
 
@@ -338,7 +372,7 @@ sub run_test
 
 	# check binary if there's a reference
 	if ($ref_bin) {
-		dbg "have ref bin\n";
+		#dbg "have ref bin\n";
 		my $ref_path = "$test/$ref_bin";
 		$retcode = do_diff($ref_path, $bin_path);
 		if ($retcode) {
@@ -350,7 +384,7 @@ sub run_test
 
 	# check dump, if reference
 	if ($ref_dump) {
-		dbg "have ref dump\n";
+		#dbg "have ref dump\n";
 		my $ref_path = "$test/$ref_dump";
 		$retcode = do_diff($ref_path, $dump_path);
 		if ($retcode) {
@@ -360,7 +394,7 @@ sub run_test
 
 	# check console, if reference
 	if ($ref_console) {
-		dbg "have ref console\n";
+		#dbg "have ref console\n";
 		my $ref_path = "$test/$ref_console";
 		$retcode = do_diff($ref_path, $console_path);
 		if ($retcode) {
