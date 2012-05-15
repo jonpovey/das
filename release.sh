@@ -7,7 +7,7 @@ if [ $# -lt 1 ]; then
 fi
 
 VER=$1
-DIR=bluedas-v$VER
+DIR=das-v$VER
 
 make && make WINDOWS=1
 rm -rf $DIR
