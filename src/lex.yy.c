@@ -638,14 +638,19 @@ char *yytext;
  * Copyright 2012 Jon Povey <jon@leetfighter.com>
  * Released under the GPL v2
  */
-void yyerror(char *);
+#include <stdarg.h>
+
+void yyerror(char *s, ...);
 #include "y.tab.h"
 #include "dasdefs.h"
 #include "output.h"
 static int get_constant(void);
+
+#define YY_USER_ACTION yylloc.line = yylineno;
+
 /* shut up warnings */
 #define YY_NO_INPUT 1
-#line 649 "src/lex.yy.c"
+#line 654 "src/lex.yy.c"
 
 #define INITIAL 0
 
@@ -830,10 +835,10 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
     
-#line 33 "src/das.l"
+#line 38 "src/das.l"
 
 
-#line 837 "src/lex.yy.c"
+#line 842 "src/lex.yy.c"
 
 	if ( !(yy_init) )
 		{
@@ -928,17 +933,17 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 35 "src/das.l"
+#line 40 "src/das.l"
 return EQU;
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 36 "src/das.l"
+#line 41 "src/das.l"
 { yylval.string = yytext + 1; return LABEL; }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 37 "src/das.l"
+#line 42 "src/das.l"
 {
 						yylval.string = yytext;
 						yytext[strlen(yytext) - 1] = 0;
@@ -947,99 +952,99 @@ YY_RULE_SETUP
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 42 "src/das.l"
+#line 47 "src/das.l"
 return get_constant();
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 43 "src/das.l"
+#line 48 "src/das.l"
 return get_constant();
 	YY_BREAK
 /* */
 case 6:
 YY_RULE_SETUP
-#line 45 "src/das.l"
+#line 50 "src/das.l"
 { yylval.integer = REG_POP; return REG; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 46 "src/das.l"
+#line 51 "src/das.l"
 { yylval.integer = REG_PUSH; return REG; }
 	YY_BREAK
 /* */
 case 8:
 YY_RULE_SETUP
-#line 48 "src/das.l"
+#line 53 "src/das.l"
 { yylval.integer = str2reg(yytext); return REG; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 49 "src/das.l"
+#line 54 "src/das.l"
 { yylval.integer = str2opcode(yytext); return OP2; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 50 "src/das.l"
+#line 55 "src/das.l"
 { yylval.integer = str2opcode(yytext); return OP1; }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 51 "src/das.l"
+#line 56 "src/das.l"
 { return DAT; }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 52 "src/das.l"
+#line 57 "src/das.l"
 { yylval.string = yytext; return SYMBOL; }
 	YY_BREAK
 case 13:
 /* rule 13 can match eol */
 YY_RULE_SETUP
-#line 53 "src/das.l"
+#line 58 "src/das.l"
 { yylval.string = yytext; return STRING; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 54 "src/das.l"
+#line 59 "src/das.l"
 return LSHIFT;
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 55 "src/das.l"
+#line 60 "src/das.l"
 return RSHIFT;
 	YY_BREAK
 case 16:
 /* rule 16 can match eol */
 YY_RULE_SETUP
-#line 57 "src/das.l"
+#line 62 "src/das.l"
 return *yytext;
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 59 "src/das.l"
+#line 64 "src/das.l"
 ;		/* ignore whitespace and DOS line endings */
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 60 "src/das.l"
+#line 65 "src/das.l"
 ;		/* comment */
 	YY_BREAK
 /* Magic to fix input with missing \n on last line */
 case YY_STATE_EOF(INITIAL):
-#line 63 "src/das.l"
+#line 68 "src/das.l"
 { static int once = 0; return once++ ? 0 : '\n'; }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 65 "src/das.l"
-yyerror("Invalid character ");
+#line 70 "src/das.l"
+yyerror("Invalid character '%c'", *yytext);
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 67 "src/das.l"
+#line 72 "src/das.l"
 ECHO;
 	YY_BREAK
-#line 1043 "src/lex.yy.c"
+#line 1048 "src/lex.yy.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2006,7 +2011,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 67 "src/das.l"
+#line 72 "src/das.l"
 
 
 
@@ -2016,16 +2021,19 @@ static int get_constant(void)
 	return CONSTANT;
 }
 
-int get_lineno(void) { return yylineno; }
-
 int yywrap(void)
 {
 	return 1;
 }
 
-void yyerror(char *s)
+void yyerror(char *s, ...)
 {
-	fprintf(stderr, "line %d: %s\n", yylineno, s);
+	va_list ap;
+	va_start(ap, s);
+
+	fprintf(stderr, "line %d: Error: ", yylineno);
+	vfprintf(stderr, s, ap);
+	fprintf(stderr, "\n");
 	das_error = 1;
 }
 

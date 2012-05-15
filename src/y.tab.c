@@ -80,18 +80,24 @@
 #include "dasdefs.h"
 #include "dat.h"
 #include "instruction.h"
-#include "output.h"
 #include "symbol.h"
+
+#define YYLTYPE LOCTYPE
+#define YYLLOC_DEFAULT(Current, Rhs, N) do { \
+	if (N) { \
+		(Current).line = YYRHSLOC(Rhs, 1).line; \
+	} else { \
+		(Current).line = YYRHSLOC(Rhs, 0).line; \
+	} \
+} while (0)
 
 int yylex();
 
-void yyerror(char *);
-int get_lineno(void);
 void parse_error(char *str);
 
 
 /* Line 189 of yacc.c  */
-#line 95 "src/y.tab.c"
+#line 101 "src/y.tab.c"
 
 /* Enabling traces.  */
 #ifndef YYDEBUG
@@ -111,6 +117,18 @@ void parse_error(char *str);
 # define YYTOKEN_TABLE 0
 #endif
 
+/* "%code requires" blocks.  */
+
+/* Line 209 of yacc.c  */
+#line 28 "src/das.y"
+
+#include "output.h"
+#define YYLTYPE LOCTYPE
+
+
+
+/* Line 209 of yacc.c  */
+#line 132 "src/y.tab.c"
 
 /* Tokens.  */
 #ifndef YYTOKENTYPE
@@ -156,7 +174,7 @@ typedef union YYSTYPE
 {
 
 /* Line 214 of yacc.c  */
-#line 25 "src/das.y"
+#line 40 "src/das.y"
 
 	int  integer;
 	char *string;
@@ -168,7 +186,7 @@ typedef union YYSTYPE
 
 
 /* Line 214 of yacc.c  */
-#line 172 "src/y.tab.c"
+#line 190 "src/y.tab.c"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
@@ -193,7 +211,7 @@ typedef struct YYLTYPE
 
 
 /* Line 264 of yacc.c  */
-#line 197 "src/y.tab.c"
+#line 215 "src/y.tab.c"
 
 #ifdef short
 # undef short
@@ -494,11 +512,11 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    58,    58,    59,    60,    61,    65,    66,    67,    71,
-      75,    76,    77,    81,    86,    94,    95,    99,   100,   101,
-     102,   103,   108,   109,   110,   111,   112,   113,   114,   115,
-     116,   117,   118,   119,   120,   121,   125,   129,   133,   134,
-     138,   139
+       0,    73,    73,    74,    75,    76,    80,    81,    82,    86,
+      90,    91,    92,    96,   101,   109,   110,   114,   115,   116,
+     117,   118,   123,   124,   125,   126,   127,   128,   129,   130,
+     131,   132,   133,   134,   135,   136,   140,   144,   148,   149,
+     153,   154
 };
 #endif
 
@@ -1310,6 +1328,18 @@ yyparse ()
   yylloc.first_column = yylloc.last_column = 1;
 #endif
 
+/* User initialization code.  */
+
+/* Line 1242 of yacc.c  */
+#line 36 "src/das.y"
+{
+	yylloc.line = 1;
+}
+
+/* Line 1242 of yacc.c  */
+#line 1341 "src/y.tab.c"
+  yylsp[0] = yylloc;
+
   goto yysetstate;
 
 /*------------------------------------------------------------.
@@ -1495,35 +1525,35 @@ yyreduce:
         case 2:
 
 /* Line 1455 of yacc.c  */
-#line 58 "src/das.y"
+#line 73 "src/das.y"
     { /*printf("line\n");*/ }
     break;
 
   case 4:
 
 /* Line 1455 of yacc.c  */
-#line 60 "src/das.y"
+#line 75 "src/das.y"
     { yyerrok; }
     break;
 
   case 9:
 
 /* Line 1455 of yacc.c  */
-#line 71 "src/das.y"
-    { label_parse((yyvsp[(1) - (1)].string)); }
+#line 86 "src/das.y"
+    { label_parse((yyloc), (yyvsp[(1) - (1)].string)); }
     break;
 
   case 12:
 
 /* Line 1455 of yacc.c  */
-#line 77 "src/das.y"
-    { directive_equ((yyvsp[(2) - (4)].symbol), (yyvsp[(4) - (4)].expr)); }
+#line 92 "src/das.y"
+    { directive_equ((yyloc), (yyvsp[(2) - (4)].symbol), (yyvsp[(4) - (4)].expr)); }
     break;
 
   case 13:
 
 /* Line 1455 of yacc.c  */
-#line 81 "src/das.y"
+#line 96 "src/das.y"
     {
 								operand_set_position((yyvsp[(2) - (4)].operand), OP_POS_B);
 								operand_set_position((yyvsp[(4) - (4)].operand), OP_POS_A);
@@ -1534,7 +1564,7 @@ yyreduce:
   case 14:
 
 /* Line 1455 of yacc.c  */
-#line 86 "src/das.y"
+#line 101 "src/das.y"
     {
 								operand_set_position((yyvsp[(2) - (2)].operand), OP_POS_A);
 								gen_instruction((yyvsp[(1) - (2)].integer), NULL, (yyvsp[(2) - (2)].operand));
@@ -1544,182 +1574,182 @@ yyreduce:
   case 16:
 
 /* Line 1455 of yacc.c  */
-#line 95 "src/das.y"
+#line 110 "src/das.y"
     { (yyval.operand) = operand_set_indirect((yyvsp[(2) - (3)].operand)); }
     break;
 
   case 17:
 
 /* Line 1455 of yacc.c  */
-#line 99 "src/das.y"
+#line 114 "src/das.y"
     { (yyval.operand) = gen_operand((yyvsp[(1) - (1)].integer), NULL, OPSTYLE_SOLO); }
     break;
 
   case 18:
 
 /* Line 1455 of yacc.c  */
-#line 100 "src/das.y"
+#line 115 "src/das.y"
     { (yyval.operand) = gen_operand(REG_NONE, (yyvsp[(1) - (1)].expr), OPSTYLE_SOLO); }
     break;
 
   case 19:
 
 /* Line 1455 of yacc.c  */
-#line 101 "src/das.y"
+#line 116 "src/das.y"
     { (yyval.operand) = gen_operand((yyvsp[(1) - (2)].integer), (yyvsp[(2) - (2)].expr), OPSTYLE_PICK); }
     break;
 
   case 20:
 
 /* Line 1455 of yacc.c  */
-#line 102 "src/das.y"
+#line 117 "src/das.y"
     { (yyval.operand) = gen_operand((yyvsp[(3) - (3)].integer), (yyvsp[(1) - (3)].expr), OPSTYLE_PLUS); }
     break;
 
   case 21:
 
 /* Line 1455 of yacc.c  */
-#line 103 "src/das.y"
+#line 118 "src/das.y"
     { (yyval.operand) = gen_operand((yyvsp[(1) - (3)].integer), (yyvsp[(3) - (3)].expr), OPSTYLE_PLUS); }
     break;
 
   case 22:
 
 /* Line 1455 of yacc.c  */
-#line 108 "src/das.y"
+#line 123 "src/das.y"
     { (yyval.expr) = gen_const((yyvsp[(1) - (1)].integer)); }
     break;
 
   case 23:
 
 /* Line 1455 of yacc.c  */
-#line 109 "src/das.y"
+#line 124 "src/das.y"
     { (yyval.expr) = gen_symbol_expr((yyvsp[(1) - (1)].symbol)); }
     break;
 
   case 24:
 
 /* Line 1455 of yacc.c  */
-#line 110 "src/das.y"
+#line 125 "src/das.y"
     { (yyval.expr) = expr_op(UMINUS, NULL, (yyvsp[(2) - (2)].expr)); }
     break;
 
   case 25:
 
 /* Line 1455 of yacc.c  */
-#line 111 "src/das.y"
+#line 126 "src/das.y"
     { (yyval.expr) = expr_op('~', NULL, (yyvsp[(2) - (2)].expr)); }
     break;
 
   case 26:
 
 /* Line 1455 of yacc.c  */
-#line 112 "src/das.y"
+#line 127 "src/das.y"
     { (yyval.expr) = expr_op('+', (yyvsp[(1) - (3)].expr), (yyvsp[(3) - (3)].expr)); }
     break;
 
   case 27:
 
 /* Line 1455 of yacc.c  */
-#line 113 "src/das.y"
+#line 128 "src/das.y"
     { (yyval.expr) = expr_op('-', (yyvsp[(1) - (3)].expr), (yyvsp[(3) - (3)].expr)); }
     break;
 
   case 28:
 
 /* Line 1455 of yacc.c  */
-#line 114 "src/das.y"
+#line 129 "src/das.y"
     { (yyval.expr) = expr_op('*', (yyvsp[(1) - (3)].expr), (yyvsp[(3) - (3)].expr)); }
     break;
 
   case 29:
 
 /* Line 1455 of yacc.c  */
-#line 115 "src/das.y"
+#line 130 "src/das.y"
     { (yyval.expr) = expr_op('/', (yyvsp[(1) - (3)].expr), (yyvsp[(3) - (3)].expr)); }
     break;
 
   case 30:
 
 /* Line 1455 of yacc.c  */
-#line 116 "src/das.y"
+#line 131 "src/das.y"
     { (yyval.expr) = expr_op('^', (yyvsp[(1) - (3)].expr), (yyvsp[(3) - (3)].expr)); }
     break;
 
   case 31:
 
 /* Line 1455 of yacc.c  */
-#line 117 "src/das.y"
+#line 132 "src/das.y"
     { (yyval.expr) = expr_op('&', (yyvsp[(1) - (3)].expr), (yyvsp[(3) - (3)].expr)); }
     break;
 
   case 32:
 
 /* Line 1455 of yacc.c  */
-#line 118 "src/das.y"
+#line 133 "src/das.y"
     { (yyval.expr) = expr_op('|', (yyvsp[(1) - (3)].expr), (yyvsp[(3) - (3)].expr)); }
     break;
 
   case 33:
 
 /* Line 1455 of yacc.c  */
-#line 119 "src/das.y"
+#line 134 "src/das.y"
     { (yyval.expr) = expr_op(LSHIFT, (yyvsp[(1) - (3)].expr), (yyvsp[(3) - (3)].expr)); }
     break;
 
   case 34:
 
 /* Line 1455 of yacc.c  */
-#line 120 "src/das.y"
+#line 135 "src/das.y"
     { (yyval.expr) = expr_op(RSHIFT, (yyvsp[(1) - (3)].expr), (yyvsp[(3) - (3)].expr)); }
     break;
 
   case 35:
 
 /* Line 1455 of yacc.c  */
-#line 121 "src/das.y"
+#line 136 "src/das.y"
     { (yyval.expr) = expr_op('(', NULL, (yyvsp[(2) - (3)].expr)); }
     break;
 
   case 36:
 
 /* Line 1455 of yacc.c  */
-#line 125 "src/das.y"
+#line 140 "src/das.y"
     { (yyval.symbol) = symbol_parse((yyvsp[(1) - (1)].string)); }
     break;
 
   case 37:
 
 /* Line 1455 of yacc.c  */
-#line 129 "src/das.y"
+#line 144 "src/das.y"
     { gen_dat((yyvsp[(2) - (2)].dat_elem)); }
     break;
 
   case 39:
 
 /* Line 1455 of yacc.c  */
-#line 134 "src/das.y"
+#line 149 "src/das.y"
     { (yyval.dat_elem) = dat_elem_follows((yyvsp[(1) - (3)].dat_elem), (yyvsp[(3) - (3)].dat_elem)); }
     break;
 
   case 40:
 
 /* Line 1455 of yacc.c  */
-#line 138 "src/das.y"
+#line 153 "src/das.y"
     { (yyval.dat_elem) = new_expr_dat_elem((yyvsp[(1) - (1)].expr)); }
     break;
 
   case 41:
 
 /* Line 1455 of yacc.c  */
-#line 139 "src/das.y"
+#line 154 "src/das.y"
     { (yyval.dat_elem) = new_string_dat_elem((yyvsp[(1) - (1)].string)); }
     break;
 
 
 
 /* Line 1455 of yacc.c  */
-#line 1723 "src/y.tab.c"
+#line 1753 "src/y.tab.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -1938,13 +1968,12 @@ yyreturn:
 
 
 /* Line 1675 of yacc.c  */
-#line 143 "src/das.y"
+#line 158 "src/das.y"
 
 
 void parse_error(char *str)
 {
-//	fprintf(stderr, "line %d: parse error: %s\n", get_lineno(), str);
-	fprintf(stderr, "line %d: parse error: %s\n", yylloc.first_line, str);
+	fprintf(stderr, "line %d: parse error: %s\n", yylloc.line, str);
 	das_error = 1;
 }
 
