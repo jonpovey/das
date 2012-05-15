@@ -19,6 +19,9 @@ int get_lineno(void);
 void parse_error(char *str);
 %}
 
+%locations
+%error-verbose
+
 %union {
 	int  integer;
 	char *string;
@@ -54,6 +57,7 @@ void parse_error(char *str);
 program:
 	program line '\n'			{ /*printf("line\n");*/ }
 	| program '\n'				/* empty line or comment */
+	| program error '\n'		{ yyerrok; }
 	|
 	;
 
@@ -83,7 +87,7 @@ instr:
 								operand_set_position($2, OP_POS_A);
 								gen_instruction($1, NULL, $2);
 								}
-	| error						{ parse_error("bad instruction "); }
+	/*| error						{ parse_error("bad instruction"); }*/
 	;
 
 operand:
@@ -140,7 +144,7 @@ dat_elem:
 
 void parse_error(char *str)
 {
-	// yylineno has advanced since the actual line this was found on
-	fprintf(stderr, "line %d: parse error: %s\n", get_lineno() - 1, str);
+//	fprintf(stderr, "line %d: parse error: %s\n", get_lineno(), str);
+	fprintf(stderr, "line %d: parse error: %s\n", yylloc.first_line, str);
 	das_error = 1;
 }

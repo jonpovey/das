@@ -116,3 +116,8 @@ install: $(PROG)
 		false; \
 	fi && cp $(PROG) $$INSTALLDIR
 endif
+
+.PHONY: test
+test: $(PROG)
+	@echo Run blackbox tests:
+	$(Q)cd tests && ./blackbox.pl
