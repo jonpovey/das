@@ -1,0 +1,4 @@
+Warning: Literal value used as destination
+line 4: Error: syntax error, unexpected ',', expecting '\n'
+line 6: Error: syntax error, unexpected '\n'
+Aborting from parse error

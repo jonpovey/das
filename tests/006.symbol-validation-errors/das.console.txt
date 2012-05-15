@@ -1,0 +1,5 @@
+Warning: line 6: Unused symbol 'unused_zeroA'
+Warning: line 7: Unused symbol 'unused_zeroB'
+Error: Undefined symbol 'nonexist'
+Warning: line 18: Unused symbol 'unused_end'
+Aborting from validation error

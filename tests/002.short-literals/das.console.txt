@@ -1,9 +1,9 @@
-warning: Unused symbol 'end'
-warning: Value -65535(0xffff0001) does not fit in 16 bits, masked to 0x1
-warning: Value 65566(0x1001e) does not fit in 16 bits, masked to 0x1e
-warning: Value -32769(0xffff7fff) does not fit in 16 bits, masked to 0x7fff
-warning: Value 65536(0x10000) does not fit in 16 bits, masked to 0x0
-warning: Value -65535(0xffff0001) does not fit in 16 bits, masked to 0x1
-warning: Value 65566(0x1001e) does not fit in 16 bits, masked to 0x1e
-warning: Value -32769(0xffff7fff) does not fit in 16 bits, masked to 0x7fff
-warning: Value 65536(0x10000) does not fit in 16 bits, masked to 0x0
+Warning: line 33: Unused symbol 'end'
+Warning: Value -65535(0xffff0001) does not fit in 16 bits, masked to 0x1
+Warning: Value 65566(0x1001e) does not fit in 16 bits, masked to 0x1e
+Warning: Value -32769(0xffff7fff) does not fit in 16 bits, masked to 0x7fff
+Warning: Value 65536(0x10000) does not fit in 16 bits, masked to 0x0
+Warning: Value -65535(0xffff0001) does not fit in 16 bits, masked to 0x1
+Warning: Value 65566(0x1001e) does not fit in 16 bits, masked to 0x1e
+Warning: Value -32769(0xffff7fff) does not fit in 16 bits, masked to 0x7fff
+Warning: Value 65536(0x10000) does not fit in 16 bits, masked to 0x0

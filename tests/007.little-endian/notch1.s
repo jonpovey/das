@@ -1,3 +1,4 @@
+; Test little-endian output.
 ; Notch's original test code
 
 ; Try some basic stuff
@@ -24,9 +25,3 @@
 			  SET PC, POP              ; 61c1
 ; Hang forever. X should now be 0x40 if everything went right.
 :crash        SET PC, crash            ; 7dc1 001a [*]
-
-; Notch's output
-;0000: 7c01 0030 7de1 1000 0020 7803 1000 c00d
-;0008: 7dc1 001a a861 7c01 2000 2161 2000 8463
-;0010: 806d 7dc1 000d 9031 7c10 0018 7dc1 001a
-;0018: 9037 61c1 7dc1 001a 0000 0000 0000 0000
