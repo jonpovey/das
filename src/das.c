@@ -204,32 +204,6 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 
-	if (!strcmp("-", binpath)) {
-		binfile = stdout;
-		/* info pointless - verbose mode incompatible */
-	} else {
-		binfile = fopen(binpath, "w");
-		info("Write binary to %s\n", binpath);
-	}
-	if (!binfile) {
-		error("Writing %s failed: %s\n", binpath, strerror(errno));
-		exit(EXIT_FAILURE);
-	}
-
-	if (dumppath) {
-		if (!strcmp("-", dumppath)) {
-			dumpfile = stdout;
-			/* info pointless - verbose mode incompatible with stdout dump */
-		} else {
-			dumpfile = fopen(dumppath, "w");
-			info("Dumping to %s\n", dumppath);
-		}
-		if (!dumpfile) {
-			error("Dump to %s failed: %s\n", dumppath, strerror(errno));
-			exit(EXIT_FAILURE);
-		}
-	}
-
 	yyin = asmfile;
 	yyparse();
 	if (das_error) {
@@ -266,7 +240,19 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	if (dumpfile) {
+	if (dumppath) {
+		if (!strcmp("-", dumppath)) {
+			dumpfile = stdout;
+			/* info pointless - verbose mode incompatible with stdout dump */
+		} else {
+			dumpfile = fopen(dumppath, "w");
+			info("Dumping to %s\n", dumppath);
+		}
+		if (!dumpfile) {
+			error("Dump to %s failed: %s\n", dumppath, strerror(errno));
+			exit(EXIT_FAILURE);
+		}
+
 		if (!outopts.omit_dump_header) {
 			fprintf(dumpfile, "; Dump from " VERSTRING "\n");
 			if (asmfile != stdin) {
@@ -294,6 +280,20 @@ int main(int argc, char **argv)
 	if (options.big_endian) {
 		reverse_words(binary, ret);
 	}
+
+	/* open binary file now we're sure we want to write to it */
+	if (!strcmp("-", binpath)) {
+		binfile = stdout;
+		/* info pointless - verbose mode incompatible */
+	} else {
+		binfile = fopen(binpath, "w");
+		info("Write binary to %s\n", binpath);
+	}
+	if (!binfile) {
+		error("Writing %s failed: %s\n", binpath, strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+
 	if (ret != fwrite(binary, sizeof(u16), ret, binfile)) {
 		fprintf(stderr, "Binary write error: %s\n", strerror(errno));
 		exitval = 1;
