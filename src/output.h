@@ -1,9 +1,23 @@
 #ifndef OUTPUT_H
 #define OUTPUT_H
-
+/*
+ * output messages and location tracking.
+ * perhaps needs a bit of a rethink and refactoring.
+ */
 #include <stdio.h>
 
 extern int das_error;
+
+/*
+ * source file location-tracking type for error reporting
+ */
+typedef struct loctype {
+	int line;
+	// later maybe start-end characters, file(name) reference
+} LOCTYPE;
+#define LOCFMT "line %d"	/* for printf */
+#define loc_err(loc, fmt, args...) error("line %d: " fmt, loc.line, ##args)
+#define loc_warn(loc, fmt, args...) warn("line %d: " fmt, loc.line, ##args)
 
 extern struct outopts {
 	int stack_style_sp;
@@ -21,12 +35,12 @@ extern struct outopts {
 
 /* fixme: better errors and warnings, with line numbers and such */
 #define error(fmt, args...) do { \
-	fprintf(stderr, "error: " fmt "\n", ##args); \
+	fprintf(stderr, "Error: " fmt "\n", ##args); \
 	das_error = 1; \
 } while (0)
 
 #define warn(fmt, args...) do { \
-	fprintf(stderr, "warning: " fmt "\n", ##args); \
+	fprintf(stderr, "Warning: " fmt "\n", ##args); \
 } while (0)
 
 /* report internal bugs */

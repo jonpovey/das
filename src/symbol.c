@@ -24,6 +24,7 @@ struct symbol {
 	char *name;
 	int  flags;
 	int  value;
+	LOCTYPE defined_loc;		/* valid if symbol is LABEL or DEF */
 	struct expr *expr;			/* exists if this is a .set symbol */
 	struct list_head list;		/* on all_symbols list */
 };
@@ -47,12 +48,14 @@ struct symbol* symbol_inlist(char *name, struct list_head *head)
  * Parse
  */
 
-void check_redefine(struct symbol *s)
+static int check_redefine(LOCTYPE newloc, struct symbol *s)
 {
-	if (s->flags & SYM_LABEL || s->flags & SYM_DEF) {
-		error("symbol '%s' redefined", s->name);
+	int redefined = s->flags & SYM_LABEL || s->flags & SYM_DEF;
+	if (redefined) {
+		loc_err(newloc, "symbol '%s' already defined at " LOCFMT, s->name,
+			s->defined_loc.line);
 	}
-	return;
+	return redefined;
 }
 
 struct symbol* symbol_parse(char *name)
@@ -69,19 +72,23 @@ struct symbol* symbol_parse(char *name)
 	return sym;
 }
 
-void label_parse(char *name)
+void label_parse(LOCTYPE loc, char *name)
 {
 	struct symbol *s;
 	s = symbol_parse(name);
-	check_redefine(s);
+	if (!check_redefine(loc, s)) {
+		s->defined_loc = loc;
+	}
 	s->flags |= SYM_LABEL;
 	add_statement(s, &label_statement_ops);
 }
 
-void directive_equ(struct symbol *s, struct expr *e)
+void directive_equ(LOCTYPE loc, struct symbol *s, struct expr *e)
 {
 	/* FIXME: detect and error on circular references */
-	check_redefine(s);
+	if (!check_redefine(loc, s)) {
+		s->defined_loc = loc;
+	}
 	s->flags |= SYM_DEF;
 	s->expr = e;
 	add_statement(s, &equ_statement_ops);
@@ -103,7 +110,7 @@ static int symbol_validate(struct symbol *s)
 
 	/* FIXME report where in the source problems come from */
 	if (!(s->flags & SYM_USED)) {
-		warn("Unused symbol '%s'", s->name);
+		loc_warn(s->defined_loc, "Unused symbol '%s'", s->name);
 	}
 	if (!(s->flags & (SYM_DEF | SYM_LABEL))) {
 		error("Undefined symbol '%s'", s->name);

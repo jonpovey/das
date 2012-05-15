@@ -24,7 +24,7 @@ char* reg2str(int reg);
 u16 reg2bits(int reg);
 int is_gpreg(int reg);
 
-void yyerror(char *);
+void yyerror(char *s, ...);
 
 int unescape_c_string(const char *src, unsigned char *dest);
 int sprint_cstring(char *buf, const unsigned char *str, int bytes);

@@ -3,11 +3,16 @@
  * Copyright 2012 Jon Povey <jon@leetfighter.com>
  * Released under the GPL v2
  */
-void yyerror(char *);
+#include <stdarg.h>
+
+void yyerror(char *s, ...);
 #include "y.tab.h"
 #include "dasdefs.h"
 #include "output.h"
 static int get_constant(void);
+
+#define YY_USER_ACTION yylloc.line = yylineno;
+
 %}
 
 %option yylineno
@@ -62,7 +67,7 @@ DAT|dat				{ return DAT; }
 					/* Magic to fix input with missing \n on last line */
 <<EOF>> 			{ static int once = 0; return once++ ? 0 : '\n'; }
 
-.					yyerror("Invalid character ");
+.					yyerror("Invalid character '%c'", *yytext);
 
 %%
 
@@ -72,15 +77,18 @@ static int get_constant(void)
 	return CONSTANT;
 }
 
-int get_lineno(void) { return yylineno; }
-
 int yywrap(void)
 {
 	return 1;
 }
 
-void yyerror(char *s)
+void yyerror(char *s, ...)
 {
-	fprintf(stderr, "line %d: %s\n", yylineno, s);
+	va_list ap;
+	va_start(ap, s);
+
+	fprintf(stderr, "line %d: Error: ", yylineno);
+	vfprintf(stderr, s, ap);
+	fprintf(stderr, "\n");
 	das_error = 1;
 }

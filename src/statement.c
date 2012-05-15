@@ -40,7 +40,7 @@ statement* next_statement(statement *cur)
  */
 void add_statement(void *private, const struct statement_ops *ops)
 {
-	statement *s = malloc(sizeof *s);
+	statement *s = calloc(1, sizeof *s);
 	s->ops = ops;
 	s->private = private;
 	list_add_tail(&s->list, &statements);

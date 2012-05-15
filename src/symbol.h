@@ -11,11 +11,12 @@ struct symbol;
 
 #include "expression.h"
 #include "instruction.h"
+#include "output.h"
 
 /* Parse */
 struct symbol* symbol_parse(char *name);
-void label_parse(char *name);
-void directive_equ(struct symbol *sym, struct expr *expr);
+void label_parse(LOCTYPE loc, char *name);
+void directive_equ(LOCTYPE loc, struct symbol *sym, struct expr *expr);
 void symbol_mark_used(struct symbol *sym);
 
 /* Analysis */

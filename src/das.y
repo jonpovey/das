@@ -9,18 +9,33 @@
 #include "dasdefs.h"
 #include "dat.h"
 #include "instruction.h"
-#include "output.h"
 #include "symbol.h"
+
+#define YYLTYPE LOCTYPE
+#define YYLLOC_DEFAULT(Current, Rhs, N) do { \
+	if (N) { \
+		(Current).line = YYRHSLOC(Rhs, 1).line; \
+	} else { \
+		(Current).line = YYRHSLOC(Rhs, 0).line; \
+	} \
+} while (0)
 
 int yylex();
 
-void yyerror(char *);
-int get_lineno(void);
 void parse_error(char *str);
 %}
 
+%code requires {
+#include "output.h"
+#define YYLTYPE LOCTYPE
+}
+
 %locations
 %error-verbose
+
+%initial-action {
+	@$.line = 1;
+}
 
 %union {
 	int  integer;
@@ -68,13 +83,13 @@ line:
 	;							
 
 label:
-	LABEL						{ label_parse($1); }
+	LABEL						{ label_parse(@$, $1); }
 	;
 
 statement:
 	dat
 	| instr
-	| EQU symbol ',' expr		{ directive_equ($2, $4); }
+	| EQU symbol ',' expr		{ directive_equ(@$, $2, $4); }
 	;
 
 instr:
@@ -144,7 +159,6 @@ dat_elem:
 
 void parse_error(char *str)
 {
-//	fprintf(stderr, "line %d: parse error: %s\n", get_lineno(), str);
-	fprintf(stderr, "line %d: parse error: %s\n", yylloc.first_line, str);
+	fprintf(stderr, "line %d: parse error: %s\n", yylloc.line, str);
 	das_error = 1;
 }
