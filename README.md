@@ -1,4 +1,4 @@
-# BlueDAS DCPU-16 Assembler
+# DAS DCPU-16 Assembler
 This is a command-line assembler, written in C, for the DCPU-16 processor;
 if you don't know what that is, see http://0x10c.com/
 

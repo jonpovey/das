@@ -53,6 +53,7 @@ CSRCS:=$(addprefix $(SRCDIR)/, $(CSRCS))
 SRCS:=$(CSRCS)
 OBJS:=$(SRCS:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
 DEPS:=$(SRCS:$(SRCDIR)/%.c=$(DEPDIR)/%.d)
+EXTRA_CLEANS:=
 
 -include $(DEPS)
 
@@ -65,28 +66,30 @@ CFLAGS += -Wall -g
 
 $(SRCDIR)/y.tab.c $(SRCDIR)/y.tab.h: $(SRCDIR)/das.y $(MAKEFILES)
 ifeq (1,$(USE_YACC))
-	@echo " + YACC $<"
+	@echo " YACC $<"
 	$(Q)yacc $(YACCFLAGS) -d -o $@ $<
+  EXTRA_CLEANS += $(SRCDIR)/y.tab.c $(SRCDIR)/y.tab.h
 else
-	@echo " + KEEP $@     (USE_YACC not set)"
+	@echo " KEEP $@     (USE_YACC not set)"
 	$(Q)touch $@
 endif
 
 $(SRCDIR)/lex.yy.c: $(SRCDIR)/das.l $(SRCDIR)/y.tab.h $(MAKEFILES)
 ifeq (1,$(USE_LEX))
-	@echo " +  LEX $<"
+	@echo " LEX  $<"
 	$(Q)lex $(LEXFLAGS) -o$@ $<
+  EXTRA_CLEANS += $(SRCDIR)/lex.yy.c
 else
-	@echo " + KEEP $@     (USE_LEX not set)"
+	@echo " KEEP $@     (USE_LEX not set)"
 	$(Q)touch $@
 endif
 
 $(PROG): $(OBJS) $(LINKERSCRIPT)
-	@echo " + LINK $@"
+	@echo " LINK $@"
 	$(Q)$(CC) $(LDFLAGS) $(OBJS) -o $@
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c $(MAKEFILES)
-	@echo " +   CC $<"
+	@echo " CC   $<"
 	@mkdir -p $(dir $@)
 	$(Q)$(CC) -c $(CFLAGS) -MD $< -o $@
     # -MD creates both .d and .o in one pass. Now process the .d file
@@ -98,7 +101,7 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.c $(MAKEFILES)
 
 .PHONY: clean
 clean:
-	rm -rf $(PROG) $(BUILDDIR)
+	rm -rf $(PROG) $(BUILDDIR) $(EXTRA_CLEANS)
 
 ifeq ($(origin WINDOWS), undefined)
 .PHONY: install
