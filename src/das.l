@@ -38,6 +38,10 @@ op1_lc		jsr|hcf|int|rfi|ia[gsq]|hw[nqi]
 %%
 
 \.set|\.equ			return EQU;
+\.text.*			; /* sections generated for gnu as */
+\.data.*			; /* sections generated for gnu as */
+\.section.*			; /* sections generated for gnu as */
+\.globl.*			; /* global symbols generated for gnu as */
 :{symbol}			{ yylval.string = yytext + 1; return LABEL; }
 {symbol}:			{
 						yylval.string = yytext;
@@ -53,7 +57,7 @@ op1_lc		jsr|hcf|int|rfi|ia[gsq]|hw[nqi]
 {gpreg}|{xreg}		{ yylval.integer = str2reg(yytext); return REG; }
 {op2}|{op2_lc}		{ yylval.integer = str2opcode(yytext); return OP2; }
 {op1}|{op1_lc}		{ yylval.integer = str2opcode(yytext); return OP1; }
-DAT|dat				{ return DAT; }
+DAT|dat|\.short		{ return DAT; }
 {symbol}			{ yylval.string = yytext; return SYMBOL; }
 \"(\\.|[^\\"])*\"	{ yylval.string = yytext; return STRING; }
 \<\<				return LSHIFT;
@@ -65,7 +69,7 @@ DAT|dat				{ return DAT; }
 ;.*			;		/* comment */
 
 					/* Magic to fix input with missing \n on last line */
-<<EOF>> 			{ static int once = 0; return once++ ? 0 : '\n'; }
+<<EOF>>				{ static int once = 0; return once++ ? 0 : '\n'; }
 
 .					yyerror("Invalid character '%c'", *yytext);
 
