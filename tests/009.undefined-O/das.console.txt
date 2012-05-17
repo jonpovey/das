@@ -1,4 +1,4 @@
-Error: line 3: Undefined symbol 'O'
+line  3: Error: Undefined symbol 'O'
 Warning: Trying to use old register 'O'? It's now called 'EX'.
-Error: line 4: Undefined symbol 'O'
+line  4: Error: Undefined symbol 'O'
 Validation error

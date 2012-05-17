@@ -15,17 +15,12 @@ typedef struct loctype {
 	int line;
 	// later maybe start-end characters, file(name) reference
 } LOCTYPE;
-#define LOCFMT "line %d"	/* for printf */
-#define loc_err(loc, fmt, args...) error("line %d: " fmt, loc.line, ##args)
-#define loc_warn(loc, fmt, args...) warn("line %d: " fmt, loc.line, ##args)
+#define LOCFMT "line %2d"	/* for printf */
 
 extern struct outopts {
 	int stack_style_sp;
 	int omit_dump_header;
 } outopts;
-
-/* wrap fprintf as print() so extra things may be added if wanted */
-#define print(to, fmt, args...) fprintf(to, fmt, ##args)
 
 /* would be nice to always evaluate args in case of side-effects */
 #define info(fmt, args...) do { \
@@ -33,15 +28,29 @@ extern struct outopts {
 		printf(fmt, ##args); \
 } while (0)
 
-/* fixme: better errors and warnings, with line numbers and such */
-#define error(fmt, args...) do { \
-	fprintf(stderr, "Error: " fmt "\n", ##args); \
+/*
+ * error and warning ugly macros:
+ * _warn()      appends \n and writes to stderr
+ * _error()     calls _warn() and sets das_error.
+ * warn()       prepends "Warning: " and calls _warn()
+ * error()      prepends "Error: " and calls _error()
+ * loc_warn()   prepends location info, "Warning: ", calls _warn()
+ * loc_err()    blah blah blah you get the idea
+ */
+#define _warn(fmt, args...) fprintf(stderr, fmt "\n", ##args)
+
+#define _error(fmt, args...) do { \
+	_warn(fmt, ##args); \
 	das_error = 1; \
 } while (0)
 
-#define warn(fmt, args...) do { \
-	fprintf(stderr, "Warning: " fmt "\n", ##args); \
-} while (0)
+#define error(fmt, args...) _error("Error: " fmt, ##args)
+#define warn(fmt, args...) _warn("Warning: " fmt, ##args)
+
+#define loc_err(loc, fmt, args...) \
+	_error("line %2d: Error: " fmt, loc.line, ##args)
+#define loc_warn(loc, fmt, args...) \
+	_warn("line %2d: Warning: " fmt, loc.line, ##args)
 
 /* report internal bugs */
 #define BUG_ON(x) ({ int r = !!(x); \
