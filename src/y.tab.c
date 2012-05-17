@@ -1582,133 +1582,133 @@ yyreduce:
 
 /* Line 1455 of yacc.c  */
 #line 114 "src/das.y"
-    { (yyval.operand) = gen_operand((yyvsp[(1) - (1)].integer), NULL, OPSTYLE_SOLO); }
+    { (yyval.operand) = gen_operand((yyloc), (yyvsp[(1) - (1)].integer), NULL, OPSTYLE_SOLO); }
     break;
 
   case 18:
 
 /* Line 1455 of yacc.c  */
 #line 115 "src/das.y"
-    { (yyval.operand) = gen_operand(REG_NONE, (yyvsp[(1) - (1)].expr), OPSTYLE_SOLO); }
+    { (yyval.operand) = gen_operand((yyloc), REG_NONE, (yyvsp[(1) - (1)].expr), OPSTYLE_SOLO); }
     break;
 
   case 19:
 
 /* Line 1455 of yacc.c  */
 #line 116 "src/das.y"
-    { (yyval.operand) = gen_operand((yyvsp[(1) - (2)].integer), (yyvsp[(2) - (2)].expr), OPSTYLE_PICK); }
+    { (yyval.operand) = gen_operand((yyloc), (yyvsp[(1) - (2)].integer), (yyvsp[(2) - (2)].expr), OPSTYLE_PICK); }
     break;
 
   case 20:
 
 /* Line 1455 of yacc.c  */
 #line 117 "src/das.y"
-    { (yyval.operand) = gen_operand((yyvsp[(3) - (3)].integer), (yyvsp[(1) - (3)].expr), OPSTYLE_PLUS); }
+    { (yyval.operand) = gen_operand((yyloc), (yyvsp[(3) - (3)].integer), (yyvsp[(1) - (3)].expr), OPSTYLE_PLUS); }
     break;
 
   case 21:
 
 /* Line 1455 of yacc.c  */
 #line 118 "src/das.y"
-    { (yyval.operand) = gen_operand((yyvsp[(1) - (3)].integer), (yyvsp[(3) - (3)].expr), OPSTYLE_PLUS); }
+    { (yyval.operand) = gen_operand((yyloc), (yyvsp[(1) - (3)].integer), (yyvsp[(3) - (3)].expr), OPSTYLE_PLUS); }
     break;
 
   case 22:
 
 /* Line 1455 of yacc.c  */
 #line 123 "src/das.y"
-    { (yyval.expr) = gen_const((yyvsp[(1) - (1)].integer)); }
+    { (yyval.expr) = gen_const_expr((yyloc), (yyvsp[(1) - (1)].integer)); }
     break;
 
   case 23:
 
 /* Line 1455 of yacc.c  */
 #line 124 "src/das.y"
-    { (yyval.expr) = gen_symbol_expr((yyvsp[(1) - (1)].symbol)); }
+    { (yyval.expr) = gen_symbol_expr((yyloc), (yyvsp[(1) - (1)].symbol)); }
     break;
 
   case 24:
 
 /* Line 1455 of yacc.c  */
 #line 125 "src/das.y"
-    { (yyval.expr) = expr_op(UMINUS, NULL, (yyvsp[(2) - (2)].expr)); }
+    { (yyval.expr) = gen_op_expr((yyloc), UMINUS, NULL, (yyvsp[(2) - (2)].expr)); }
     break;
 
   case 25:
 
 /* Line 1455 of yacc.c  */
 #line 126 "src/das.y"
-    { (yyval.expr) = expr_op('~', NULL, (yyvsp[(2) - (2)].expr)); }
+    { (yyval.expr) = gen_op_expr((yyloc), '~', NULL, (yyvsp[(2) - (2)].expr)); }
     break;
 
   case 26:
 
 /* Line 1455 of yacc.c  */
 #line 127 "src/das.y"
-    { (yyval.expr) = expr_op('+', (yyvsp[(1) - (3)].expr), (yyvsp[(3) - (3)].expr)); }
+    { (yyval.expr) = gen_op_expr((yyloc), '+', (yyvsp[(1) - (3)].expr), (yyvsp[(3) - (3)].expr)); }
     break;
 
   case 27:
 
 /* Line 1455 of yacc.c  */
 #line 128 "src/das.y"
-    { (yyval.expr) = expr_op('-', (yyvsp[(1) - (3)].expr), (yyvsp[(3) - (3)].expr)); }
+    { (yyval.expr) = gen_op_expr((yyloc), '-', (yyvsp[(1) - (3)].expr), (yyvsp[(3) - (3)].expr)); }
     break;
 
   case 28:
 
 /* Line 1455 of yacc.c  */
 #line 129 "src/das.y"
-    { (yyval.expr) = expr_op('*', (yyvsp[(1) - (3)].expr), (yyvsp[(3) - (3)].expr)); }
+    { (yyval.expr) = gen_op_expr((yyloc), '*', (yyvsp[(1) - (3)].expr), (yyvsp[(3) - (3)].expr)); }
     break;
 
   case 29:
 
 /* Line 1455 of yacc.c  */
 #line 130 "src/das.y"
-    { (yyval.expr) = expr_op('/', (yyvsp[(1) - (3)].expr), (yyvsp[(3) - (3)].expr)); }
+    { (yyval.expr) = gen_op_expr((yyloc), '/', (yyvsp[(1) - (3)].expr), (yyvsp[(3) - (3)].expr)); }
     break;
 
   case 30:
 
 /* Line 1455 of yacc.c  */
 #line 131 "src/das.y"
-    { (yyval.expr) = expr_op('^', (yyvsp[(1) - (3)].expr), (yyvsp[(3) - (3)].expr)); }
+    { (yyval.expr) = gen_op_expr((yyloc), '^', (yyvsp[(1) - (3)].expr), (yyvsp[(3) - (3)].expr)); }
     break;
 
   case 31:
 
 /* Line 1455 of yacc.c  */
 #line 132 "src/das.y"
-    { (yyval.expr) = expr_op('&', (yyvsp[(1) - (3)].expr), (yyvsp[(3) - (3)].expr)); }
+    { (yyval.expr) = gen_op_expr((yyloc), '&', (yyvsp[(1) - (3)].expr), (yyvsp[(3) - (3)].expr)); }
     break;
 
   case 32:
 
 /* Line 1455 of yacc.c  */
 #line 133 "src/das.y"
-    { (yyval.expr) = expr_op('|', (yyvsp[(1) - (3)].expr), (yyvsp[(3) - (3)].expr)); }
+    { (yyval.expr) = gen_op_expr((yyloc), '|', (yyvsp[(1) - (3)].expr), (yyvsp[(3) - (3)].expr)); }
     break;
 
   case 33:
 
 /* Line 1455 of yacc.c  */
 #line 134 "src/das.y"
-    { (yyval.expr) = expr_op(LSHIFT, (yyvsp[(1) - (3)].expr), (yyvsp[(3) - (3)].expr)); }
+    { (yyval.expr) = gen_op_expr((yyloc), LSHIFT, (yyvsp[(1) - (3)].expr), (yyvsp[(3) - (3)].expr)); }
     break;
 
   case 34:
 
 /* Line 1455 of yacc.c  */
 #line 135 "src/das.y"
-    { (yyval.expr) = expr_op(RSHIFT, (yyvsp[(1) - (3)].expr), (yyvsp[(3) - (3)].expr)); }
+    { (yyval.expr) = gen_op_expr((yyloc), RSHIFT, (yyvsp[(1) - (3)].expr), (yyvsp[(3) - (3)].expr)); }
     break;
 
   case 35:
 
 /* Line 1455 of yacc.c  */
 #line 136 "src/das.y"
-    { (yyval.expr) = expr_op('(', NULL, (yyvsp[(2) - (3)].expr)); }
+    { (yyval.expr) = gen_op_expr((yyloc), '(', NULL, (yyvsp[(2) - (3)].expr)); }
     break;
 
   case 36:
