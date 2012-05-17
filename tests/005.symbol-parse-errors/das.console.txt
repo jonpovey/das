@@ -2,4 +2,4 @@ Error: line 8: symbol 'mix' already defined at line 8
 Error: line 10: symbol 'explicit' already defined at line 9
 Error: line 19: symbol 'redef' already defined at line 18
 Error: line 21: symbol 'redef' already defined at line 18
-Aborting from parse error
+Parse error

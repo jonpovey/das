@@ -10,13 +10,17 @@
 struct expr;
 
 #include "symbol.h"
+#include "output.h"
 
 /* Parse */
-struct expr* gen_const(int val);
-struct expr* gen_symbol_expr(struct symbol *sym);
-struct expr* expr_op(int op, struct expr* left, struct expr* right);
+struct expr* gen_const_expr(LOCTYPE loc, int val);
+struct expr* gen_symbol_expr(LOCTYPE loc, struct symbol *sym);
+struct expr* gen_op_expr(LOCTYPE loc, int op, struct expr* left,
+						struct expr* right);
 
 /* Analyse */
+void expr_validate(struct expr *e);
+void expr_freeze(struct expr *e);
 int expr_value(struct expr *expr);
 int expr_maychange(struct expr *expr);
 

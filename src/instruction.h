@@ -10,6 +10,7 @@ struct operand;
 struct instr;
 
 #include "expression.h"
+#include "output.h"
 
 enum opstyle {
 	OPSTYLE_SOLO = 1,
@@ -23,7 +24,8 @@ enum op_pos {
 };
 
 /* Parse */
-struct operand* gen_operand(int reg, struct expr *e, enum opstyle style);
+struct operand* gen_operand(LOCTYPE loc, int reg, struct expr *e,
+							enum opstyle style);
 void gen_instruction(int opcode, struct operand *b, struct operand *a);
 struct operand* operand_set_indirect(struct operand *);
 struct operand* operand_set_position(struct operand *o, enum op_pos pos);

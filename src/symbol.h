@@ -20,7 +20,7 @@ void directive_equ(LOCTYPE loc, struct symbol *sym, struct expr *expr);
 void symbol_mark_used(struct symbol *sym);
 
 /* Analysis */
-int symbols_validate(void);
+int symbol_check_defined(LOCTYPE loc, struct symbol *s);
 int symbol_value(struct symbol *sym);
 
 /* Output */

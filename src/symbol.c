@@ -104,44 +104,49 @@ void symbol_mark_used(struct symbol *s)
  * Analysis
  */
 
-static int symbol_validate(struct symbol *s)
+/* validation pass: check symbol use in an expression (at loc) */
+int symbol_check_defined(LOCTYPE loc, struct symbol *s)
 {
 	int ret = 0;
+	static int warned_o = 0;
 
-	/* FIXME report where in the source problems come from */
-	if (!(s->flags & SYM_USED)) {
-		loc_warn(s->defined_loc, "Unused symbol '%s'", s->name);
-	}
 	if (!(s->flags & (SYM_DEF | SYM_LABEL))) {
-		error("Undefined symbol '%s'", s->name);
-		if (!strcasecmp("O", s->name)) {
+		loc_err(loc, "Undefined symbol '%s'", s->name);
+		if (!warned_o && !strcasecmp("O", s->name)) {
 			/* maybe old 1.1 source trying to use Overflow register. Hint. */
 			warn("Trying to use old register 'O'? It's now called 'EX'.");
+			warned_o = 1;
 		}
 		ret = 1;
 	}
 	return ret;
 }
 
-/*
- * special-case validate symbols at the moment. Maybe this should be a
- * generic statement validate thing, walk and validate all statements.
- * return 0 if no errors.
- */
-int symbols_validate(void)
+/* label/equ validation: just check the defined symbol is used somewhere */
+static int symbol_check_used(void *private)
 {
-	struct symbol *s;
-	int ret = 0;
+	struct symbol *s = private;
 
-	if (list_empty(&all_symbols)) {
-		return 0;
-	} else {
-		list_for_each_entry(s, &all_symbols, list) {
-			ret = (symbol_validate(s) || ret);
-		}
+	if (!(s->flags & SYM_USED)) {
+		loc_warn(s->defined_loc, "Unused symbol '%s'", s->name);
 	}
-	DBG("returning %d\n", ret);
-	return ret;
+	/* unused symbol MIGHT be an error later, with -Werror=unused-symbol..? */
+	return 0;
+}
+
+/*
+ * equ statements need to have the symbol they are setting checked for usage
+ * like a label, but also do a validation call on the setting expression.
+ */
+static int equ_validate(void *private)
+{
+	struct symbol *s = private;
+
+	assert(s->expr);
+	expr_validate(s->expr);
+	symbol_check_used(private);
+
+	return das_error;
 }
 
 /*
@@ -255,6 +260,7 @@ void symbols_free(void)
 }
 
 static const struct statement_ops label_statement_ops = {
+	.validate        = symbol_check_used,
 	.analyse         = label_analyse,
 	.get_binary_size = NULL,	/* labels have no binary output */
 	.print_asm       = label_print_asm,
@@ -263,6 +269,7 @@ static const struct statement_ops label_statement_ops = {
 };
 
 static const struct statement_ops equ_statement_ops = {
+	.validate        = equ_validate,
 	.analyse         = equ_analyse,
 	.get_binary_size = NULL,	/* equ directives have no binary output */
 	.print_asm       = equ_print_asm,

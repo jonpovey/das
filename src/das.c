@@ -207,20 +207,17 @@ int main(int argc, char **argv)
 	yyin = asmfile;
 	yyparse();
 	if (das_error) {
-		fprintf(stderr, "Aborting from parse error\n");
+		fprintf(stderr, "Parse error\n");
 		return 1;
 	}
 
-	/*
-	 * Do validation pass before analysis. This should probably be all
-	 * statements, for now just symbols.
-	 */
-	if (symbols_validate()) {
-		fprintf(stderr, "Aborting from validation error\n");
+	/* Do validation pass before analysis. */
+	if (statements_validate()) {
+		fprintf(stderr, "Validation error\n");
 		return 1;
 	}
 
-	/* resolve instruction lengths and symbol values */
+	/* Resolve instruction lengths and symbol values, eventually */
 	do {
 		ret = statements_analyse();
 		if (ret >= 0) {
@@ -228,15 +225,19 @@ int main(int argc, char **argv)
 			hack_loop_breaker++;
 		}
 	} while (ret > 0 && hack_loop_breaker < HACK_ANALYSE_MAX);
-
 	if (hack_loop_breaker == HACK_ANALYSE_MAX && ret != 0) {
 		fprintf(stderr, "Analysis still running after %d passes: "
 				"Circular .equ reference?\n", hack_loop_breaker);
 		return 1;
 	}
-
 	if (ret < 0) {
 		fprintf(stderr, "Analysis error.\n");
+		return 1;
+	}
+
+	/* Finalise values, any last warnings/errors, compute machine code */
+	if (statements_freeze()) {
+		fprintf(stderr, "Code generation error\n");
 		return 1;
 	}
 

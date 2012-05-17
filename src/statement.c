@@ -47,7 +47,28 @@ void add_statement(void *private, const struct statement_ops *ops)
 }
 
 /*
- * Do one analysis pass of all statements; this used to be walk_instructions()
+ * Validation pass of statements.
+ * This happens once after the initial parsing, before the analysis rounds.
+ */
+int statements_validate(void)
+{
+	statement *s;
+	int error = 0;
+
+	assert(!list_empty(&statements));
+	list_for_each_entry(s, &statements, list) {
+		if (s->ops->validate) {
+			if (s->ops->validate(s->private))
+				error = 1;
+		} else {
+			DBG("statement without validate function\n");
+		}
+	}
+	return error;
+}
+
+/*
+ * Do one analysis pass of all statements.
  * Compute statement size and maintain a running total (PC value).
  *
  * Labels are included in this statement list and will get their value set
@@ -63,12 +84,12 @@ void add_statement(void *private, const struct statement_ops *ops)
  * lengths may change due to literal value fitting in short form or not.
  *
  * It is possible to write constant expressions such that a literal can
- * change from greater than to less than 0x20, no longer requiring a next-word.
+ * change from greater than to less than 0x1f, no longer requiring a next-word.
  * It is also possible to write code that would trap a naive optimiser in an
  * infinte loop, e.g.
- *   :from  SET C, from + 33 - to
+ *   :from  SET C, from + 32 - to
  *   :to
- * This must be assembled as a next-word literal of value 0x1f.
+ * This must be assembled as a next-word literal of value 0x1e.
  *
  * At the moment this is handled by never allowing an instruction to become
  * shorter.
@@ -116,6 +137,23 @@ int statements_analyse(void)
 	// should be trace or maybe warn/error if > 64k
 	TRACE0("analysis end PC: 0x%x words\n", pc);
 	return labels_changed;
+}
+
+/* Calculate final expression values, machine code, and any final errors */
+int statements_freeze(void)
+{
+	statement *s;
+	int error = 0;
+
+	list_for_each_entry(s, &statements, list) {
+		if (s->ops->freeze) {
+			if (s->ops->freeze(s->private))
+				error = 1;
+		} else {
+			DBG("statement without freeze function\n");
+		}
+	}
+	return error;
 }
 
 /*

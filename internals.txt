@@ -1,0 +1,21 @@
+das internals
+
+Notes for myself, maybe of interest to aspiring das hackers.
+May well be out of date, trust only the code.
+
+Assembly process:
+0.1 TODO: preprocessor.
+1. lex/parse, build abstract syntax tree and master list of statements.
+2. single validation pass through statement list
+	- warn about defined but unused symbols
+	- error on attempted use of undefined symbols
+3. multiple analysis passes
+	- calcluate instruction and operand sizes; depends on and may change symbol
+	  values. analysis stops when symbol/label values settle (not trivial)
+4. single freeze/generate pass
+	- warn/error about any final stuff like divide by zero in expression
+	  (deferred as it may depend on changing symbol values).
+	- finalise expression/symbol resulting values
+	- generate binary (in elements of AST)
+	- error if binary is too big
+5. binary output to file and optional prettyprinted dump

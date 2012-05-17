@@ -5,8 +5,9 @@
 
 :unused_zeroA
 :unused_zeroB	SET a,b
-:second			JSR nonexist		; error undefined symbol.
-				SUB a, second
+				JSR nonexist		; error, undefined symbol.
+				DAT 1, nowt - 3		; error, undefined
+				.equ nused2, undef2	; one unused, the other undefined
 :loop
 				XOR [data], b
 				XOR x, [y + data]

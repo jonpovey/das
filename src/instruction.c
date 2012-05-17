@@ -18,6 +18,7 @@
 #include "statement.h"
 
 struct operand {
+	LOCTYPE loc;
 	enum opstyle style;
 	enum op_pos position;
 	int indirect;
@@ -61,18 +62,28 @@ int mask_constant(int value, s16 *bits)
 		return 0;
 }
 
-/* do some parse-time validation checks on an operand */
-void operand_validate(struct operand *o)
+/* validation pass checks on an operand */
+int operand_validate(struct operand *o)
 {
+	/* I'm going to use das_error kind of like stdlib errno now.
+	 * This may be evil and hacky, not decided yet.
+	 */
+	das_error = 0;
+
 	DBG_FUNC("pos:%s style:%d indirect:%d reg:%d(%s) expr:%p\n",
 		o->position == OP_POS_A ? "a" : "b",
 		o->style, o->indirect, o->reg, reg2str(o->reg), o->expr);
+
+	/* validate expr first if present. no return value, check das_error later */
+	if (o->expr)
+		expr_validate(o->expr);
+
 	/*
 	 * general-purpose and special regs are combined now by the parser,
 	 * check for shennanigans like [PC + 3] or bare X + 1
 	 */
 	if (o->style == OPSTYLE_PLUS && ! o->indirect) {
-		error("Register + constant illegal outside [brackets]");
+		loc_err(o->loc, "Register + constant illegal outside [brackets]");
 	}
 
 	/*
@@ -88,7 +99,7 @@ void operand_validate(struct operand *o)
 			/* PEEK */
 			o->reg = REG_PEEK;
 		} else {
-			/* not implemented yet: SP++, --SP */
+			/* SP++, --SP already transformed to POP, PUSH */
 			BUG();
 		}
 		o->indirect = 0;
@@ -99,20 +110,20 @@ void operand_validate(struct operand *o)
 		if (is_gpreg(o->reg) || o->reg == REG_SP) {
 			// OK
 		} else {
-			error("Can't use %s inside [brackets]", reg2str(o->reg));
+			loc_err(o->loc, "Can't use %s inside [brackets]", reg2str(o->reg));
 		}
 	}
 
 	// check PICK style is paired up with PICK register
 	if (o->style == OPSTYLE_PICK && o->reg != REG_PICK) {
-		error("'Register value' form only permitted for PICK");
+		loc_err(o->loc, "'Register value' form only permitted for PICK");
 	}
 	if (o->reg == REG_PICK && o->style != OPSTYLE_PICK) {
 		if (o->style == OPSTYLE_SOLO) {
-			error("PICK without offset");
+			loc_err(o->loc, "PICK without offset");
 		} else if (o->style == OPSTYLE_PLUS) {
 			/* could warn and allow this? */
-			error("Register PICK cannot be combined with '+'");
+			loc_err(o->loc, "Register PICK cannot be combined with '+'");
 		} else {
 			BUG();
 		}
@@ -121,30 +132,38 @@ void operand_validate(struct operand *o)
 	/* validate a/b specifics */
 	if (o->position == OP_POS_A) {
 		if (o->reg == REG_PUSH) {
-			error("PUSH not usable as source ('a') operand");
+			loc_err(o->loc, "PUSH not usable as source ('a') operand");
 		}
 	} else if (o->position == OP_POS_B) {
 		if (o->reg == REG_POP) {
-			error("POP not usable as destination ('b') operand");
+			loc_err(o->loc, "POP not usable as destination ('b') operand");
 		}
 		if (o->expr && !o->reg && !o->indirect) {
 			/*
 			 * literal destination will be ignored, warn. Maybe has valid use
 			 * for arithmetic, EX things?
 			 */
-			warn("Literal value used as destination");
+			loc_warn(o->loc, "Literal value used as destination");
 		}
 	} else {
 		BUG();
 	}
 
+	/* if any error() were reported, das_error will have been set */
+	return das_error;
 }
 
-/* generate an operand from reg (maybe -1), expr (maybe null), style (type) */
-struct operand* gen_operand(int reg, struct expr *expr, enum opstyle style)
+/*
+ * generate an operand from reg (maybe -1), expr (maybe null), style (type)
+ * also store source location reference, for error messages (and possibly for
+ * dumping)
+ */
+struct operand* gen_operand(LOCTYPE loc, int reg, struct expr *expr,
+							enum opstyle style)
 {
 	TRACE1("reg:%d expr:%p style:%i\n", reg, expr, style);
 	struct operand *o = calloc(1, sizeof *o);
+	o->loc = loc;
 	o->style = style;
 	o->reg = reg;
 	o->expr = expr;
@@ -179,13 +198,6 @@ void gen_instruction(int opcode, struct operand *b, struct operand *a)
 	i->opcode = opcode;
 	i->a = a;
 	i->b = b;
-	/* do validation at some later stage? */
-	if (a) {
-		operand_validate(a);
-	}
-	if (b) {
-		operand_validate(b);
-	}
 	//DBG("add instruction %p to list\n", i);
 	add_statement(i, &instruction_statement_ops);
 }
@@ -193,6 +205,24 @@ void gen_instruction(int opcode, struct operand *b, struct operand *a)
 /*
  *	Analysis
  */
+
+static int instruction_validate(void *private)
+{
+	struct instr* i = private;
+	int ret = 0;
+
+	/*
+	 * Anything to validate about the instruction itself, apart from
+	 * validating operands individually?
+	 */
+	if (i->a) {
+		ret += operand_validate(i->a);
+	}
+	if (i->b) {
+		ret += operand_validate(i->b);
+	}
+	return ret;
+}
 
 /* (calculate and) get the word count needed to represent a value */
 int operand_word_count(struct operand *o)
@@ -267,7 +297,8 @@ void operand_genbits(struct operand *o)
 		exprval = expr_value(o->expr);
 		ret = mask_constant(exprval, &valword);
 		if (ret) {
-			warn("Value %d(0x%x) does not fit in 16 bits, masked to 0x%hx",
+			loc_warn(o->loc,
+				"Value %d(0x%x) does not fit in 16 bits, masked to 0x%hx",
 				exprval, exprval, valword);
 		}
 	}
@@ -377,6 +408,27 @@ static int instruction_binary_size(void *private) {
 		i->length_known = len;
 	}
 	return len;
+}
+
+void operand_freeze(struct operand *o)
+{
+	/* TODO finalise word count, generate bits blah blah */
+	if (o->expr)
+		expr_freeze(o->expr);
+}
+
+int instruction_freeze(void *private)
+{
+	struct instr *i = private;
+	/* TODO: more validation, fix the binary size and generate bits here */
+
+	/* Freeze expressions, issue any divide-by-zero errors */
+	if (i->a)
+		operand_freeze(i->a);
+	if (i->b)
+		operand_freeze(i->b);
+
+	return das_error;
 }
 
 /*
@@ -491,7 +543,9 @@ static void instruction_free_private(void *private)
 }
 
 static struct statement_ops instruction_statement_ops = {
+	.validate        = instruction_validate,
 	.analyse         = NULL,	/* all done during get-length.. for now */
+	.freeze          = instruction_freeze,
 	.get_binary_size = instruction_binary_size,
 	.get_binary      = instruction_get_binary,
 	.print_asm       = instruction_print_asm,

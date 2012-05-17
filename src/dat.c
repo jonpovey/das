@@ -75,6 +75,18 @@ struct dat_elem* new_string_dat_elem(char *str)
 /*
  * Analyse
  */
+static int dat_validate(void *private)
+{
+	struct dat *dat = private;
+	struct dat_elem *e = dat->first;
+
+	while (e) {
+		if (e->type == DATTYPE_EXPR)
+			expr_validate(e->expr);
+		e = e->next;
+	}
+	return das_error;
+}
 
 /*
  * Output
@@ -160,6 +172,7 @@ void dat_free_private(void *private)
 }
 
 static struct statement_ops dat_statement_ops = {
+	.validate        = dat_validate,
 	.analyse         = NULL,
 	.get_binary_size = dat_binary_size,
 	.get_binary      = dat_get_binary,

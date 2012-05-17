@@ -111,29 +111,29 @@ operand:
 	;
 
 op_expr:
-	REG							{ $$ = gen_operand($1, NULL, OPSTYLE_SOLO); }
-	| expr						{ $$ = gen_operand(REG_NONE, $1, OPSTYLE_SOLO); }
-	| REG expr  /* PICK n */	{ $$ = gen_operand($1, $2, OPSTYLE_PICK); }
-	| expr '+' REG				{ $$ = gen_operand($3, $1, OPSTYLE_PLUS); }
-	| REG '+' expr				{ $$ = gen_operand($1, $3, OPSTYLE_PLUS); }
+	REG							{ $$ = gen_operand(@$, $1, NULL, OPSTYLE_SOLO); }
+	| expr						{ $$ = gen_operand(@$, REG_NONE, $1, OPSTYLE_SOLO); }
+	| REG expr  /* PICK n */	{ $$ = gen_operand(@$, $1, $2, OPSTYLE_PICK); }
+	| expr '+' REG				{ $$ = gen_operand(@$, $3, $1, OPSTYLE_PLUS); }
+	| REG '+' expr				{ $$ = gen_operand(@$, $1, $3, OPSTYLE_PLUS); }
  /*	| error						{ parse_error("bad op_expr"); } */
 	;
 
 expr:
-	CONSTANT					{ $$ = gen_const($1); }
-	| symbol					{ $$ = gen_symbol_expr($1); }
-	| '-' expr %prec UMINUS 	{ $$ = expr_op(UMINUS, NULL, $2); }
-	| '~' expr %prec '~'		{ $$ = expr_op('~', NULL, $2); }
-	| expr '+' expr				{ $$ = expr_op('+', $1, $3); }
-	| expr '-' expr				{ $$ = expr_op('-', $1, $3); }
-	| expr '*' expr				{ $$ = expr_op('*', $1, $3); }
-	| expr '/' expr				{ $$ = expr_op('/', $1, $3); }
-	| expr '^' expr				{ $$ = expr_op('^', $1, $3); }
-	| expr '&' expr				{ $$ = expr_op('&', $1, $3); }
-	| expr '|' expr				{ $$ = expr_op('|', $1, $3); }
-	| expr LSHIFT expr			{ $$ = expr_op(LSHIFT, $1, $3); }
-	| expr RSHIFT expr			{ $$ = expr_op(RSHIFT, $1, $3); }
-	| '(' expr ')'				{ $$ = expr_op('(', NULL, $2); }
+	CONSTANT					{ $$ = gen_const_expr(@$, $1); }
+	| symbol					{ $$ = gen_symbol_expr(@$, $1); }
+	| '-' expr %prec UMINUS 	{ $$ = gen_op_expr(@$, UMINUS, NULL, $2); }
+	| '~' expr %prec '~'		{ $$ = gen_op_expr(@$, '~', NULL, $2); }
+	| expr '+' expr				{ $$ = gen_op_expr(@$, '+', $1, $3); }
+	| expr '-' expr				{ $$ = gen_op_expr(@$, '-', $1, $3); }
+	| expr '*' expr				{ $$ = gen_op_expr(@$, '*', $1, $3); }
+	| expr '/' expr				{ $$ = gen_op_expr(@$, '/', $1, $3); }
+	| expr '^' expr				{ $$ = gen_op_expr(@$, '^', $1, $3); }
+	| expr '&' expr				{ $$ = gen_op_expr(@$, '&', $1, $3); }
+	| expr '|' expr				{ $$ = gen_op_expr(@$, '|', $1, $3); }
+	| expr LSHIFT expr			{ $$ = gen_op_expr(@$, LSHIFT, $1, $3); }
+	| expr RSHIFT expr			{ $$ = gen_op_expr(@$, RSHIFT, $1, $3); }
+	| '(' expr ')'				{ $$ = gen_op_expr(@$, '(', NULL, $2); }
 	;
 
 symbol:

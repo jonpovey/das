@@ -20,6 +20,7 @@ enum expr_type {
 };
 
 struct expr {
+	LOCTYPE loc;
 	int type;
 	int maychange;
 	int value;			/* valid shortcut if maychange = 0 */
@@ -79,22 +80,24 @@ static int expr_value_calc(struct expr *e)
 /*
  * Parse
  */
-struct expr* gen_const(int val)
+struct expr* gen_const_expr(LOCTYPE loc, int val)
 {
 	//printf("gen_const: %d\n", val);
 	struct expr *e = calloc(sizeof *e, 1);
 	DBG_MEM("alloc %d: %p\n", ++alloc_count, e);
+	e->loc = loc;
 	e->type = EXPR_CONSTANT;
 	e->maychange = 0;
 	e->value = val;
 	return e;
 }
 
-struct expr* gen_symbol_expr(struct symbol *sym)
+struct expr* gen_symbol_expr(LOCTYPE loc, struct symbol *sym)
 {
 	//printf("gen_symbol: %s\n", str);
 	struct expr *e = calloc(sizeof *e, 1);
 	DBG_MEM("alloc %d: %p\n", ++alloc_count, e);
+	e->loc = loc;
 	e->type = EXPR_SYMBOL;
 	e->maychange = 1;
 	e->value = 0;
@@ -103,7 +106,8 @@ struct expr* gen_symbol_expr(struct symbol *sym)
 	return e;
 }
 
-struct expr* expr_op(int op, struct expr* left, struct expr* right)
+struct expr* gen_op_expr(LOCTYPE loc, int op, struct expr* left,
+						struct expr* right)
 {
 	struct expr *e;
 
@@ -113,6 +117,7 @@ struct expr* expr_op(int op, struct expr* left, struct expr* right)
 
 	e = calloc(sizeof *e, 1);
 	DBG_MEM("alloc %d: %p\n", ++alloc_count, e);
+	e->loc = loc;
 	e->type = EXPR_OPERATOR;
 	e->op = op;
 	e->left = left;
@@ -131,6 +136,20 @@ struct expr* expr_op(int op, struct expr* left, struct expr* right)
 /*
  * Analysis
  */
+void expr_validate(struct expr *e)
+{
+	/* if it's a symbol, check it's defined */
+	if (e->type == EXPR_SYMBOL) {
+		symbol_check_defined(e->loc, e->symbol);
+	} else if (e->type == EXPR_OPERATOR) {
+		/* recursively validate any children */
+		if (e->left)
+			expr_validate(e->left);
+		if (e->right)
+			expr_validate(e->right);
+	}
+	/* nothing else to do? Nothing for constants? */
+}
 
 int expr_maychange(struct expr *e)
 {
@@ -145,6 +164,22 @@ int expr_value(struct expr *e)
 		return expr_value_calc(e);
 	else
 		return e->value;
+}
+
+void expr_freeze(struct expr *e)
+{
+	/* TODO think about this more when I have not drunk wine.
+	 * freeze children, get values. check for div by zero.
+	 */
+	if (e->type == EXPR_OPERATOR) {
+		if (e->left)
+			expr_freeze(e->left);
+		if (e->right)
+			expr_freeze(e->right);
+
+		if (e->op == '/' && expr_value(e->right) == 0)
+			loc_err(e->loc, "Division by zero in expression");
+	}
 }
 
 /*

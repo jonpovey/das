@@ -23,14 +23,9 @@ typedef struct statement statement;
 
 /* types of statements implement some or all of these method callbacks */
 struct statement_ops {
-	/*
-	 * analyse(): Visit this statement in this analysis pass.
-	 * Maybe multiple passes for optimisation of e.g. symbol-base short
-	 * literals.
-	 * May need to pass in analysis state ptr or at least PC value for labels
-	 * return 0 on success, -1 error, 1 if label and updated
-	 */
-	int (*analyse)(void *private, int pc); // analysis pass, return.. what?
+	int (*validate)(void *private);        /* see statements_validate() */
+	int (*analyse)(void *private, int pc); /* see statements_analyse() */
+	int (*freeze)(void *private);          /* see statements_freeze() */
 
 	/* get_binary_size() may not be implemented for e.g. labels */
 	int (*get_binary_size)(void *private);
@@ -56,7 +51,9 @@ struct statement_ops {
 };
 
 void add_statement(void *private, const struct statement_ops *ops);
+int statements_validate(void);
 int statements_analyse(void);
+int statements_freeze(void);
 int statements_get_binary(u16 **dest);
 int statements_fprint_asm(FILE *f);
 void statements_free(void);

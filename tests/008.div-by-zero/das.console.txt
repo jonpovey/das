@@ -1,0 +1,6 @@
+Error: line 2: Division by zero in expression
+Error: line 5: Division by zero in expression
+Code generation error
+divide by zero error in expression (return 0)
+divide by zero error in expression (return 0)
+divide by zero error in expression (return 0)
