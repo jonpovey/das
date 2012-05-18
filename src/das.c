@@ -54,6 +54,7 @@ void print_usage(void)
 	fprintf(stderr, "  --no-dump-pc       Omit PC column from dump; makes dump a valid source file\n");
 	fprintf(stderr, "  --no-dump-header   Omit header comments from dump\n");
 	fprintf(stderr, "  --sp-style         Dump [SP] style for stack access. Default PUSH/POP style\n");
+	fprintf(stderr, "  --no-warn-ignored  Hush warnings about ignored directives (clang bodge)\n");
 	fprintf(stderr, "  --le               Generate little-endian binary (default big-endian)\n");
 	fprintf(stderr, "\nThe character '-' for files means read/write to stdin/stdout instead.\n");
 }
@@ -78,6 +79,7 @@ void handle_args(int argc, char **argv)
 			{"verbose",		no_argument,		0, 'v'},
 			{"sp-style",	no_argument,		0, 0},
 			{"no-dump-header", no_argument,		0, 0},
+			{"no-warn-ignored", no_argument,	0, 0},
 			{},
 		};
 
@@ -109,6 +111,10 @@ void handle_args(int argc, char **argv)
 				break;
 			case 6:
 				outopts.omit_dump_header = 1;
+				break;
+			case 7:
+				/* FIXME generic error/warn/silent switching system */
+				outopts.no_warn_ignored = 1;
 				break;
 			default:
 				BUG();

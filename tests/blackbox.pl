@@ -339,9 +339,8 @@ sub run_test
 	closedir($test_dh);
 
 	if ($ref_bin eq "" && $ref_dump eq "" && $ref_console eq "") {
-		print("Test $test: No reference output to test against\n",
+		test_failure("test config", "No reference output to test against\n",
 			"(any of $OUT_BIN_FILE, $OUT_DUMP_FILE, $OUT_CONSOLE_FILE)\n");
-		bail();
 	}
 
 	if (1 != scalar @srcs) {

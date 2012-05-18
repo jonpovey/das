@@ -1,0 +1,4 @@
+line  4: Warning: ignoring directive
+line  5: Warning: ignoring directive
+line  6: Warning: ignoring directive
+line  7: Warning: ignoring directive

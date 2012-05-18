@@ -1,0 +1,3 @@
+line 10: Error: syntax error, unexpected SYMBOL
+line 11: Error: syntax error, unexpected SYMBOL
+Parse error

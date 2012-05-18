@@ -20,6 +20,7 @@ typedef struct loctype {
 extern struct outopts {
 	int stack_style_sp;
 	int omit_dump_header;
+	int no_warn_ignored;
 } outopts;
 
 /* would be nice to always evaluate args in case of side-effects */

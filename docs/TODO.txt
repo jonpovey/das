@@ -1,0 +1,5 @@
+Scrappy TODO list
+
+- fix blackbox error if reference binary present but no generated binary
+- better blackbox hex diff view; internal perl? would need no temp files and
+  be portable.

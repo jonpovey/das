@@ -5,7 +5,7 @@
  * Released under the GPL v2
  */
 
-#define VERSION "0.15"
+#define VERSION "0.16"
 #define VERSTRING "das DCPU-16 Assembler, version " VERSION
 
 extern struct options {

@@ -35,7 +35,15 @@ op2_lc		set|add|sub|mul|mli|div|dvi|mod|mdi|and|[bx]or|sh[lr]|asr|if[bcengalu]|a
 op1			JSR|HCF|INT|RFI|IA[GSQ]|HW[NQI]
 op1_lc		jsr|hcf|int|rfi|ia[gsq]|hw[nqi]
 
+/* temporary fixup for clang, ignore these: */
+ignored_directive	text|data|section|globl
+
 %%
+
+\.{ignored_directive}({ws}.*)?	{
+						if (!outopts.no_warn_ignored)
+							loc_warn(yylloc, "ignoring directive");
+					}
 
 \.set|\.equ			return EQU;
 :{symbol}			{ yylval.string = yytext + 1; return LABEL; }
@@ -53,7 +61,7 @@ op1_lc		jsr|hcf|int|rfi|ia[gsq]|hw[nqi]
 {gpreg}|{xreg}		{ yylval.integer = str2reg(yytext); return REG; }
 {op2}|{op2_lc}		{ yylval.integer = str2opcode(yytext); return OP2; }
 {op1}|{op1_lc}		{ yylval.integer = str2opcode(yytext); return OP1; }
-DAT|dat				{ return DAT; }
+DAT|dat|\.short		{ return DAT; }
 {symbol}			{ yylval.string = yytext; return SYMBOL; }
 \"(\\.|[^\\"])*\"	{ yylval.string = yytext; return STRING; }
 \<\<				return LSHIFT;
@@ -65,9 +73,9 @@ DAT|dat				{ return DAT; }
 ;.*			;		/* comment */
 
 					/* Magic to fix input with missing \n on last line */
-<<EOF>> 			{ static int once = 0; return once++ ? 0 : '\n'; }
+<<EOF>>				{ static int once = 0; return once++ ? 0 : '\n'; }
 
-.					yyerror("Invalid character '%c'", *yytext);
+.					yyerror("invalid character '%c'", *yytext);
 
 %%
 
