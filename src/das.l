@@ -46,6 +46,10 @@ ignored_directive	text|data|section|globl
 					}
 
 \.set|\.equ			return EQU;
+\.text.*			; /* sections generated for gnu as */
+\.data.*			; /* sections generated for gnu as */
+\.section.*			; /* sections generated for gnu as */
+\.globl.*			; /* global symbols generated for gnu as */
 :{symbol}			{ yylval.string = yytext + 1; return LABEL; }
 {symbol}:			{
 						yylval.string = yytext;
