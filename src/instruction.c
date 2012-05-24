@@ -356,14 +356,12 @@ void operand_genbits(struct operand *o)
 u16 operand_firstbits(struct operand *o)
 {
 	assert(o->known_word_count >= 1);
-	//printf("firstbits: 0x%x\n", o->firstbits);
 	return o->firstbits;
 }
 
 u16 operand_nextbits(struct operand *o)
 {
 	assert(o->known_word_count == 2);
-	//printf("nextbits: 0x%x\n", o->nextbits);
 	return o->nextbits;
 }
 
@@ -371,7 +369,6 @@ u16 operand_nextbits(struct operand *o)
 int operand_fixed_len(struct operand *o)
 {
 	if (o->known_word_count > 0) {
-		//printf("fixed: known words\n");
 		return 1;
 	}
 
@@ -380,7 +377,6 @@ int operand_fixed_len(struct operand *o)
 		/* literal */
 		return !expr_maychange(o->expr);
 	}
-	//printf("operand not fixed len\n");
 	return 0;
 }
 
@@ -404,7 +400,6 @@ static int instruction_binary_size(void *private) {
 
 	if (operand_fixed_len(i->a) && (!i->b || operand_fixed_len(i->b))) {
 		/* not going to change, can shortcut next time */
-		//printf("set shortcut: %d\n", len);
 		i->length_known = len;
 	}
 	return len;
@@ -412,9 +407,9 @@ static int instruction_binary_size(void *private) {
 
 void operand_freeze(struct operand *o)
 {
-	/* TODO finalise word count, generate bits blah blah */
 	if (o->expr)
 		expr_freeze(o->expr);
+	operand_genbits(o);
 }
 
 int instruction_freeze(void *private)
@@ -442,11 +437,9 @@ int instruction_get_binary(u16 *dest, void *private)
 	int nwords = 0;
 
 	assert(i->a);
-	operand_genbits(i->a);
 	BINGEN_DBG_FUNC("opcode:%x", i->opcode);
 	BINGEN_DBG(" a:%x", operand_firstbits(i->a));
 	if (i->b) {
-		operand_genbits(i->b);
 		BINGEN_DBG(" b:%x", operand_firstbits(i->b));
 	}
 

@@ -2,7 +2,7 @@
 
 	DAT (1 + 2 * 3)		- 7
 	DAT (1 + -1)		- 0
-	DAT 1 /0			; error
+;	DAT 1 /0			; would cause divide-by-zero error
 	DAT ~1				- 0xfffe
 	DAT ~-1				- 0
 	DAT -~1				- 2

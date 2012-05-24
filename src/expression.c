@@ -60,7 +60,7 @@ static int expr_value_calc(struct expr *e)
 	case '*': return left * right;
 	case '/':
 		if (right == 0) {
-			printf("divide by zero error in expression (return 0)\n");
+			/* error at freeze time if this is still the case */
 			return 0;
 		} else {
 			return left / right;
@@ -71,9 +71,11 @@ static int expr_value_calc(struct expr *e)
 	case '&': return left & right;
 	case LSHIFT: return left << right;
 	case RSHIFT: return left >> right;
-	default:
-		fprintf(stderr, "BUG: unhandled operator %d\n", e->op);
 	}
+	/* big bug, want to bomb out messily */
+	DBG("unhandled operator %d\n", e->op);
+	BUG();
+	das_error = 1;
 	return -1;
 }
 

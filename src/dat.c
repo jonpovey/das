@@ -88,6 +88,19 @@ static int dat_validate(void *private)
 	return das_error;
 }
 
+static int dat_freeze(void *private)
+{
+	struct dat *dat = private;
+	struct dat_elem *e = dat->first;
+
+	while (e) {
+		if (e->type == DATTYPE_EXPR)
+			expr_freeze(e->expr);
+		e = e->next;
+	}
+	return das_error;
+}
+
 /*
  * Output
  */
@@ -174,6 +187,7 @@ void dat_free_private(void *private)
 static struct statement_ops dat_statement_ops = {
 	.validate        = dat_validate,
 	.analyse         = NULL,
+	.freeze          = dat_freeze,
 	.get_binary_size = dat_binary_size,
 	.get_binary      = dat_get_binary,
 	.print_asm       = dat_print_asm,

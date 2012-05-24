@@ -3,7 +3,3 @@ line  9: Warning: Value -65535(0xffff0001) does not fit in 16 bits, masked to 0x
 line 18: Warning: Value 65566(0x1001e) does not fit in 16 bits, masked to 0x1e
 line 25: Warning: Value -32769(0xffff7fff) does not fit in 16 bits, masked to 0x7fff
 line 27: Warning: Value 65536(0x10000) does not fit in 16 bits, masked to 0x0
-line  9: Warning: Value -65535(0xffff0001) does not fit in 16 bits, masked to 0x1
-line 18: Warning: Value 65566(0x1001e) does not fit in 16 bits, masked to 0x1e
-line 25: Warning: Value -32769(0xffff7fff) does not fit in 16 bits, masked to 0x7fff
-line 27: Warning: Value 65536(0x10000) does not fit in 16 bits, masked to 0x0
