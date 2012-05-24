@@ -1,5 +1,22 @@
 Scrappy TODO list
 
+- preprocessor, includes
+	- gas .ifdef works on normal symbols, not macro space
+- incbin
+- label redefinition should be first-wins and warn on attempt to redefine.
+- .equ should allow redefinition.. check detailed semantics.
+- local labels with forward/backward refs a-la gas
+- org, align (fill/resv?)
+- relocation support, binary format, linking?
+	- possible optimised assemble-and-link multiple files
+	- raises the issue of symbol scope, headers
+	- gas does auto extern..? don't do this?
+	- .global (and .globl?)
+- magic nextword
+- .err .end
+
+blackbox
+========
 - fix blackbox error if reference binary present but no generated binary
 - better blackbox hex diff view; internal perl? would need no temp files and
   be portable.
