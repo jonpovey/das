@@ -63,7 +63,7 @@ int mask_constant(int value, s16 *bits)
 }
 
 /* validation pass checks on an operand */
-int operand_validate(struct operand *o)
+int operand_validate(struct operand *o, int warn_b_literal)
 {
 	/* I'm going to use das_error kind of like stdlib errno now.
 	 * This may be evil and hacky, not decided yet.
@@ -138,7 +138,7 @@ int operand_validate(struct operand *o)
 		if (o->reg == REG_POP) {
 			loc_err(o->loc, "POP not usable as destination ('b') operand");
 		}
-		if (o->expr && !o->reg && !o->indirect) {
+		if (warn_b_literal && o->expr && !o->reg && !o->indirect) {
 			/*
 			 * literal destination will be ignored, warn. Maybe has valid use
 			 * for arithmetic, EX things?
@@ -216,10 +216,10 @@ static int instruction_validate(void *private)
 	 * validating operands individually?
 	 */
 	if (i->a) {
-		ret += operand_validate(i->a);
+		ret += operand_validate(i->a, 0);
 	}
 	if (i->b) {
-		ret += operand_validate(i->b);
+		ret += operand_validate(i->b, opcode_warn_b_literal(i->opcode));
 	}
 	return ret;
 }

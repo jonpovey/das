@@ -15,9 +15,9 @@
  * macro magic. use GCC designated initialisers to build a sparse array
  * of strings indexed by opcode. special opcodes are offset by 0x20
  */
-#define OP(val, op, count) [val] = #op
-#define SOP(val, op, count) [val | SPECIAL_OPCODE] = #op
-static char *opcodes[64] = { OPCODES SPECIAL_OPCODES };
+#define OP(val, op, count, wb) [val] = { .name = #op, .warn_b = wb }
+#define SOP(val, op, count) [val | SPECIAL_OPCODE] = { .name = #op }
+static struct opcode opcodes[64] = { OPCODES SPECIAL_OPCODES };
 #undef OP
 #undef SOP
 
@@ -31,18 +31,6 @@ static char *opcodes[64] = { OPCODES SPECIAL_OPCODES };
 static struct reg registers[] = { REGISTERS };
 #undef REGISTER
 
-int arrsearch(char *str, char **arr, int arrsize)
-{
-	int i;
-
-	for (i = 0; i < arrsize; i++) {
-		if (arr[i] && 0 == strcasecmp(str, arr[i]))
-			return i;
-	}
-	fprintf(stderr, "BUG '%s' not found!\n", str);
-	return -1;
-}
-
 int valid_reg(int reg)
 {
 	/* reg 0 is not valid, it means "no register" */
@@ -51,19 +39,26 @@ int valid_reg(int reg)
 
 int valid_opcode(int op)
 {
-	return op >= 0 && op < ARRAY_SIZE(opcodes) && opcodes[op];
+	return op >= 0 && op < ARRAY_SIZE(opcodes) && opcodes[op].name;
 }
 
 /* get op value for an opcode string */
 int str2opcode(char *str)
 {
-	return arrsearch(str, opcodes, ARRAY_SIZE(opcodes));
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(opcodes); i++) {
+		if (opcodes[i].name && 0 == strcasecmp(str, opcodes[i].name))
+			return i;
+	}
+	fprintf(stderr, "BUG opcode '%s' not found!\n", str);
+	return -1;
 }
 
 char* opcode2str(int op)
 {
 	assert(valid_opcode(op));
-	return opcodes[op];
+	return opcodes[op].name;
 }
 
 u16 opcode2bits(int opcode)
@@ -82,6 +77,13 @@ int is_special(int opcode)
 	if (BUG_ON(!valid_opcode(opcode)))
 		return -1;
 	return opcode & SPECIAL_OPCODE;
+}
+
+int opcode_warn_b_literal(int opcode)
+{
+	if (BUG_ON(!valid_opcode(opcode)))
+		return 0;
+	return opcodes[opcode].warn_b;
 }
 
 int str2reg(char *str)

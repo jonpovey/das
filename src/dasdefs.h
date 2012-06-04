@@ -8,6 +8,11 @@
 typedef unsigned short u16;
 typedef   signed short s16;
 
+struct opcode {
+	char *name;
+	int warn_b;		/* warn if b is literal (discarded write) */
+};
+
 struct reg {
 	u16  valbits;
 	char *name;
@@ -18,6 +23,7 @@ int str2opcode(char *str);
 char* opcode2str(int op);
 u16 opcode2bits(int opcode);
 int is_special(int opcode);
+int opcode_warn_b_literal(int opcode);
 
 int str2reg(char *str);
 char* reg2str(int reg);
@@ -33,35 +39,35 @@ int sprint_cstring(char *buf, const unsigned char *str, int bytes);
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #endif // #ifndef ARRAY_SIZE
 
-/* Opcodes: OP(opcode value, name, minimum cycle count) */
+/* Opcodes: OP(opcode value, name, minimum cycle count, warn if b written) */
 #define OPCODES \
-	OP(0x01, SET, 1), \
-	OP(0x02, ADD, 2), \
-	OP(0x03, SUB, 3), \
-	OP(0x04, MUL, 2), \
-	OP(0x05, MLI, 2), \
-	OP(0x06, DIV, 3), \
-	OP(0x07, DVI, 3), \
-	OP(0x08, MOD, 3), \
-	OP(0x09, MDI, 3), \
-	OP(0x0a, AND, 1), \
-	OP(0x0b, BOR, 1), \
-	OP(0x0c, XOR, 1), \
-	OP(0x0d, SHR, 2), \
-	OP(0x0e, ASR, 2), \
-	OP(0x0f, SHL, 2), \
-	OP(0x10, IFB, 2), \
-	OP(0x11, IFC, 2), \
-	OP(0x12, IFE, 2), \
-	OP(0x13, IFN, 2), \
-	OP(0x14, IFG, 2), \
-	OP(0x15, IFA, 2), \
-	OP(0x16, IFL, 2), \
-	OP(0x17, IFU, 2), \
-	OP(0x1a, ADX, 3), \
-	OP(0x1b, SBX, 3), \
-	OP(0x1e, STI, 2), \
-	OP(0x1f, STD, 2),
+	OP(0x01, SET, 1, 1), \
+	OP(0x02, ADD, 2, 1), \
+	OP(0x03, SUB, 3, 1), \
+	OP(0x04, MUL, 2, 1), \
+	OP(0x05, MLI, 2, 1), \
+	OP(0x06, DIV, 3, 1), \
+	OP(0x07, DVI, 3, 1), \
+	OP(0x08, MOD, 3, 1), \
+	OP(0x09, MDI, 3, 1), \
+	OP(0x0a, AND, 1, 1), \
+	OP(0x0b, BOR, 1, 1), \
+	OP(0x0c, XOR, 1, 1), \
+	OP(0x0d, SHR, 2, 1), \
+	OP(0x0e, ASR, 2, 1), \
+	OP(0x0f, SHL, 2, 1), \
+	OP(0x10, IFB, 2, 0), \
+	OP(0x11, IFC, 2, 0), \
+	OP(0x12, IFE, 2, 0), \
+	OP(0x13, IFN, 2, 0), \
+	OP(0x14, IFG, 2, 0), \
+	OP(0x15, IFA, 2, 0), \
+	OP(0x16, IFL, 2, 0), \
+	OP(0x17, IFU, 2, 0), \
+	OP(0x1a, ADX, 3, 1), \
+	OP(0x1b, SBX, 3, 1), \
+	OP(0x1e, STI, 2, 1), \
+	OP(0x1f, STD, 2, 1),
 
 #define SPECIAL_OPCODES \
 	SOP(0x01, JSR, 3), \
