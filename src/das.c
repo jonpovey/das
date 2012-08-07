@@ -293,7 +293,7 @@ int main(int argc, char **argv)
 		binfile = stdout;
 		/* info pointless - verbose mode incompatible */
 	} else {
-		binfile = fopen(binpath, "w");
+		binfile = fopen(binpath, "wb");
 		info("Write binary to %s\n", binpath);
 	}
 	if (!binfile) {

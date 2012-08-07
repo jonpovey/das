@@ -1,5 +1,6 @@
 Scrappy TODO list
 
+- write test for conditional warning on literal b. (also consider special ops)
 - preprocessor, includes
 	- gas .ifdef works on normal symbols, not macro space
 - incbin
